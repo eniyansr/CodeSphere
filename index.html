@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeSphere Pro - AI-Powered Compiler & Exam Platform</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            darkbg: '#080a10',
+            panelbg: 'rgba(15, 23, 42, 0.65)',
+            panelborder: 'rgba(148, 163, 184, 0.08)',
+            accent: {
+              cyan: '#06b6d4',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              amber: '#f59e0b'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          backdropBlur: {
+            xs: '2px',
+          },
+          boxShadow: {
+            'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+            'glass-inset': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)',
+            'glow-cyan': '0 0 15px rgba(6, 182, 212, 0.4)',
+            'glow-indigo': '0 0 15px rgba(99, 102, 241, 0.4)',
+          },
+          animation: {
+            'pulse-fast': 'pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'spin-slow': 'spin 8s linear infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide/dist/umd/lucide.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Pyodide Python WASM Engine -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+  <!-- Monaco Editor loader (AMD Loader) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.3);
+    }
+
+    body {
+      background-color: #080a10;
+      color: #f8fafc;
+      overflow-x: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-input {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+    .glass-input:focus {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+      outline: none;
+    }
+
+    /* Accessibility scale support */
+    .text-scale-sm { font-size: 0.875rem !important; }
+    .text-scale-base { font-size: 1rem !important; }
+    .text-scale-lg { font-size: 1.125rem !important; }
+    .text-scale-xl { font-size: 1.25rem !important; }
+
+    /* High Contrast overrides */
+    .high-contrast {
+      background-color: #000000 !important;
+      color: #ffffff !important;
+    }
+    .high-contrast .glass-panel {
+      background: #000000 !important;
+      border: 2px solid #ffffff !important;
+    }
+    .high-contrast button {
+      border: 2px solid #ffffff !important;
+      color: #ffffff !important;
+    }
+
+    /* Radar animation for live proctoring dashboard */
+    .radar-pulse {
+      position: relative;
+    }
+    .radar-pulse::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      border: 2px solid #f43f5e;
+      border-radius: 50%;
+      animation: radar-grow 2s linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes radar-grow {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(2.2);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Loading Overlay -->
+  <div id="app-loading" class="fixed inset-0 bg-[#080a10] z-50 flex flex-col items-center justify-center space-y-4">
+    <div class="relative w-16 h-16">
+      <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+      <div class="absolute inset-0 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+    </div>
+    <div class="text-xl font-bold tracking-wider text-slate-100 animate-pulse">CodeSphere Pro</div>
+    <div class="text-sm text-slate-400">Loading compiler, proctoring & dashboard...</div>
+  </div>
+
+  <!-- Primary Application Wrapper -->
+  <div id="app-container" class="flex-grow flex flex-col min-h-screen hidden">
+    <!-- Will be populated by JS Modules -->
+  </div>
+
+  <!-- Main ES6 Entry Script -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
