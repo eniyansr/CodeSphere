@@ -30,7 +30,7 @@ function renderStudentDashboard(state, t) {
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/40 pb-5">
         <div>
           <h2 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Welcome back, Eniyan Rajesh!
+            Welcome back, ${state.googleUser ? state.googleUser.name : 'Eniyan Rajesh'}!
           </h2>
           <p class="text-xs text-slate-400">Track study metrics, verify certification tracks, and continue your assessment queues.</p>
         </div>

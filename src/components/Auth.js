@@ -1,5 +1,5 @@
 // CodeSphere Pro - Google OAuth-Style Sign-in with Saved Accounts
-import { updateState } from '../state.js';
+import { state, updateState } from '../state.js';
 
 // ── Auth flow steps ───────────────────────────────────────────────────────────
 // 'landing' | 'chooser' | 'email' | 'password' | 'role'
@@ -163,6 +163,24 @@ function renderLanding() {
               <button type="submit"
                 class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] transition font-semibold text-white text-sm shadow-lg shadow-indigo-600/20">
                 Continue
+              </button>
+            </form>
+
+            <div class="flex items-center gap-3 pt-2">
+              <div class="flex-1 h-px bg-slate-800"></div>
+              <span class="text-slate-600 text-[10px] uppercase tracking-wider font-bold">Or Student Access Code</span>
+              <div class="flex-1 h-px bg-slate-800"></div>
+            </div>
+            <form id="auth-student-code-form" class="space-y-3">
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 font-semibold block" for="auth-student-code-input">Access Code</label>
+                <input id="auth-student-code-input" type="text"
+                  class="w-full glass-input rounded-xl px-4 py-3 text-sm placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/60 text-center font-mono font-bold tracking-widest text-cyan-400 uppercase"
+                  placeholder="e.g. STUD101" required autocomplete="off"/>
+              </div>
+              <button type="submit"
+                class="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-[0.99] transition font-bold text-white text-sm shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-1.5">
+                Enter Student Portal
               </button>
             </form>
           </div>
@@ -387,6 +405,34 @@ export function bindAuthEvents() {
     selectedAccount = resolveAccount(enteredEmail);
     authStep        = 'password';
     updateState({});
+  });
+
+  // Landing: student access code form submit
+  document.getElementById('auth-student-code-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const codeVal = document.getElementById('auth-student-code-input')?.value?.trim()?.toUpperCase();
+    if (!codeVal) return;
+
+    const studentProfiles = state.studentProfiles || [];
+    const foundStudent = studentProfiles.find(s => s.code.toUpperCase() === codeVal);
+
+    if (foundStudent) {
+      const studentEmail = foundStudent.email || `${foundStudent.name.toLowerCase().replace(/\s+/g, '')}@codesphere.edu`;
+      saveAccount(studentEmail, {
+        name: foundStudent.name,
+        avatar: foundStudent.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+        color: '#4F46E5'
+      }, 'student');
+
+      updateState({
+        isLoggedIn: true,
+        googleUser: { name: foundStudent.name, email: studentEmail },
+        role: 'student',
+        activeTab: 'dashboard',
+      });
+    } else {
+      alert("Invalid Access Code. Please ask your teacher for your student registration code.");
+    }
   });
 
   // Chooser: click saved account — skip role screen if role already saved

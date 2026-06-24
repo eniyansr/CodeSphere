@@ -103,7 +103,8 @@ export function ClassroomStudent(state) {
               
               <div class="space-y-3">
                 ${activeClass.assignments.map(ass => {
-                  const hasSubmitted = ass.submissions.some(s => s.studentName === "Eniyan Rajesh");
+                  const currentStudentName = state.googleUser ? state.googleUser.name : "Eniyan Rajesh";
+                  const hasSubmitted = ass.submissions.some(s => s.studentName === currentStudentName);
                   return `
                     <div class="bg-slate-950/30 p-4 rounded-xl border border-slate-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-slate-950/50 transition">
                       <div class="space-y-1">

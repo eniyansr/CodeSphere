@@ -132,6 +132,56 @@ export function ClassroomTeacher(state) {
                       </tr>
                     ` : ''}
                   </tbody>
+              </div>
+            </div>
+
+            <!-- Student Roster & Access Codes -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+              <div class="flex justify-between items-center border-b border-slate-800/60 pb-3">
+                <h4 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                  <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i> Student Roster & Access Codes
+                </h4>
+                <button id="teacher-add-student-btn" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition active:scale-95 flex items-center gap-1">
+                  <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register Student
+                </button>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-800/60 text-slate-400">
+                      <th class="py-2.5 font-semibold">Student Name</th>
+                      <th class="py-2.5 font-semibold">Email</th>
+                      <th class="py-2.5 font-semibold">Access Code</th>
+                      <th class="py-2.5 font-semibold text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(state.studentProfiles || []).map(student => `
+                      <tr class="border-b border-slate-900/60 hover:bg-slate-900/20 text-slate-300">
+                        <td class="py-3 font-bold flex items-center space-x-2">
+                          <div class="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-indigo-400 border border-slate-700/40">
+                            ${student.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </div>
+                          <span>${student.name}</span>
+                        </td>
+                        <td class="py-3 text-slate-400">${student.email}</td>
+                        <td class="py-3">
+                          <span class="font-mono text-xs text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 select-all">${student.code}</span>
+                        </td>
+                        <td class="py-3 text-right">
+                          <button data-copy-code="${student.code}" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-semibold transition active:scale-95">
+                            Copy Code
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                    ${(!state.studentProfiles || state.studentProfiles.length === 0) ? `
+                      <tr>
+                        <td colspan="4" class="py-6 text-center text-slate-500 font-medium">No students registered yet. Click "Register Student" to generate access codes.</td>
+                      </tr>
+                    ` : ''}
+                  </tbody>
                 </table>
               </div>
             </div>
@@ -202,6 +252,36 @@ export function ClassroomTeacher(state) {
                 <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
                   <button id="classroom-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
                   <button id="classroom-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Build Classroom</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Register Student Modal Dialog -->
+            <div id="student-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+              <div class="glass-panel w-full max-w-md rounded-2xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                  <h3 class="text-base font-bold text-white flex items-center gap-1.5">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i> Register Student Profile
+                  </h3>
+                  <button id="student-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                  </button>
+                </div>
+                
+                <div class="space-y-3.5 text-xs">
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Student's Full Name</label>
+                    <input id="stud-name-input" type="text" placeholder="e.g. John Doe" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 font-semibold mb-1">Student's Email</label>
+                    <input id="stud-email-input" type="email" placeholder="e.g. john@gmail.com" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+                  </div>
+                </div>
+
+                <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
+                  <button id="student-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
+                  <button id="student-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Generate Access Profile</button>
                 </div>
               </div>
             </div>
@@ -357,6 +437,59 @@ export function bindClassroomTeacherEvents(state) {
         activeTab: 'replay_viewer', // special route
         replayTargetAssignmentId: assId,
         replayTargetStudent: student
+      });
+    });
+  });
+
+  // Student registration modal trigger
+  const studModal = document.getElementById('student-modal');
+  document.getElementById('teacher-add-student-btn')?.addEventListener('click', () => {
+    studModal?.classList.remove('hidden');
+  });
+  document.getElementById('student-modal-close')?.addEventListener('click', () => {
+    studModal?.classList.add('hidden');
+  });
+  document.getElementById('student-modal-cancel')?.addEventListener('click', () => {
+    studModal?.classList.add('hidden');
+  });
+
+  // Save new student profile & generate unique code
+  document.getElementById('student-modal-save')?.addEventListener('click', () => {
+    const name = document.getElementById('stud-name-input')?.value?.trim();
+    const email = document.getElementById('stud-email-input')?.value?.trim();
+    if (!name || !email) {
+      alert("Please fill in both name and email.");
+      return;
+    }
+
+    // Generate unique student access code (e.g. STUD-8A4F)
+    const randomHex = Math.floor(0x1000 + Math.random() * 0x8fff).toString(16).toUpperCase();
+    const code = `STUD-${randomHex}`;
+
+    const newStudent = { name, email, code };
+    const currentProfiles = state.studentProfiles || [];
+
+    updateState({
+      studentProfiles: [...currentProfiles, newStudent]
+    });
+
+    // Clear inputs and close modal
+    document.getElementById('stud-name-input').value = '';
+    document.getElementById('stud-email-input').value = '';
+    studModal?.classList.add('hidden');
+
+    alert(`Student profile registered successfully!\nName: ${name}\nAccess Code: ${code}\nGive this code to the student to let them log in.`);
+  });
+
+  // Copy code handler
+  document.querySelectorAll('[data-copy-code]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const code = e.currentTarget.getAttribute('data-copy-code');
+      navigator.clipboard.writeText(code).then(() => {
+        alert(`Access Code ${code} copied to clipboard!`);
+      }).catch(err => {
+        console.error("Clipboard copy failed: ", err);
+        alert(`Access Code is: ${code}`);
       });
     });
   });
