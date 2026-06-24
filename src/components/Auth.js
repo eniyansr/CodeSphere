@@ -1,4 +1,4 @@
-﻿// CodeSphere Pro - Google OAuth-Style Sign-in with Saved Accounts
+// CodeSphere Pro - Google OAuth-Style Sign-in with Saved Accounts
 import { updateState } from '../state.js';
 
 // ── Auth flow steps ───────────────────────────────────────────────────────────
@@ -317,37 +317,17 @@ function renderRoleSelection() {
         </div>
         <div class="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 glass-panel space-y-4">
           <div class="text-center">
-            <h3 class="text-white font-extrabold text-lg">Choose your Portal</h3>
-            <p class="text-slate-400 text-xs mt-1">
-              ${lastRole
-                ? `Welcome back! You last used the <span class="font-bold text-${lastRole === 'teacher' ? 'emerald' : 'indigo'}-400">${lastRole}</span> portal.`
-                : 'Students and teachers have separate, secured workspaces.'}
-            </p>
+            <h3 class="text-white font-extrabold text-lg">Teacher Portal</h3>
+            <p class="text-slate-400 text-xs mt-1">Enter your teacher workspace to manage classes, proctoring &amp; student analytics.</p>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <button id="role-choose-student"
-              class="group flex flex-col items-start p-5 rounded-xl border
-                ${lastRole === 'student' ? 'border-indigo-500/60 bg-indigo-500/10' : 'border-slate-800/60 bg-slate-900/40'}
-                hover:bg-indigo-500/10 hover:border-indigo-500/50 transition duration-200 text-left relative">
-              ${lastRole === 'student' ? '<span class="absolute top-2 right-2 text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded-full">Last used</span>' : ''}
-              <div class="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                <i data-lucide="graduation-cap" class="w-4 h-4 text-indigo-400"></i>
-              </div>
-              <div class="text-sm font-bold text-slate-200 group-hover:text-indigo-400 transition">Student Portal</div>
-              <p class="text-[11px] text-slate-500 leading-normal mt-1">Practice, exams, battles &amp; certificates</p>
-              <div class="mt-3 text-[11px] font-bold text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition">
-                Enter <i data-lucide="arrow-right" class="w-3 h-3"></i>
-              </div>
-            </button>
+          <div class="pt-1">
             <button id="role-choose-teacher"
-              class="group flex flex-col items-start p-5 rounded-xl border
-                ${lastRole === 'teacher' ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-slate-800/60 bg-slate-900/40'}
-                hover:bg-emerald-500/10 hover:border-emerald-500/50 transition duration-200 text-left relative">
-              ${lastRole === 'teacher' ? '<span class="absolute top-2 right-2 text-[9px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">Last used</span>' : ''}
+              class="group w-full flex flex-col items-start p-5 rounded-xl border border-emerald-500/60 bg-emerald-500/10
+                hover:bg-emerald-500/15 hover:border-emerald-500/70 transition duration-200 text-left relative">
               <div class="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition">
                 <i data-lucide="presentation" class="w-4 h-4 text-emerald-400"></i>
               </div>
-              <div class="text-sm font-bold text-slate-200 group-hover:text-emerald-400 transition">Teacher Portal</div>
+              <div class="text-sm font-bold text-slate-200 group-hover:text-emerald-400 transition">Enter Teacher Portal</div>
               <p class="text-[11px] text-slate-500 leading-normal mt-1">Classes, proctoring &amp; student analytics</p>
               <div class="mt-3 text-[11px] font-bold text-emerald-400 flex items-center gap-1 group-hover:translate-x-1 transition">
                 Enter <i data-lucide="arrow-right" class="w-3 h-3"></i>
@@ -409,15 +389,21 @@ export function bindAuthEvents() {
     updateState({});
   });
 
-  // Chooser: click saved account
+  // Chooser: click saved account — skip role screen if role already saved
   document.getElementById('chooser-account-list')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-chooser-email]');
     if (!btn) return;
     const email  = btn.getAttribute('data-chooser-email');
     enteredEmail    = email;
     selectedAccount = resolveAccount(email);
-    authStep        = 'role';
-    updateState({});
+    const saved = getSavedAccounts()[email.toLowerCase()];
+    if (saved && saved.role) {
+      // Already has a role — log in directly, no role screen
+      completeLogin(saved.role);
+    } else {
+      authStep = 'role';
+      updateState({});
+    }
   });
 
   // Chooser: Use another account
@@ -450,11 +436,16 @@ export function bindAuthEvents() {
     updateState({});
   });
 
-  // Password: submit
+  // Password: submit — skip role screen if account already has a saved role
   document.getElementById('auth-password-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    authStep = 'role';
-    updateState({});
+    const saved = getSavedAccounts()[enteredEmail.toLowerCase()];
+    if (saved && saved.role) {
+      completeLogin(saved.role);
+    } else {
+      authStep = 'role';
+      updateState({});
+    }
   });
 
   // Role: back
@@ -464,11 +455,6 @@ export function bindAuthEvents() {
     enteredEmail    = '';
     selectedAccount = null;
     updateState({});
-  });
-
-  // Role: Student
-  document.getElementById('role-choose-student')?.addEventListener('click', () => {
-    completeLogin('student');
   });
 
   // Role: Teacher
@@ -485,7 +471,7 @@ export function resetAuth() {
   updateState({
     isLoggedIn:  false,
     googleUser:  null,
-    role:        'student',
+    role:        'teacher',
     activeTab:   'dashboard'
   });
 }
