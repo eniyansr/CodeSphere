@@ -31,7 +31,8 @@ export const TRANSLATIONS = {
     replayCode: "Code Replay",
     testCases: "Test Cases",
     customInput: "Custom Input",
-    liveCamera: "AI Proctor Camera"
+    liveCamera: "AI Proctor Camera",
+    notepad: "Notepad"
   },
   ta: {
     dashboard: "தகவல் பலகை",
@@ -62,7 +63,8 @@ export const TRANSLATIONS = {
     replayCode: "குறியீடு மறுஇயக்கம்",
     testCases: "சோதனை வழக்குகள்",
     customInput: "தனிப்பயன் உள்ளீடு",
-    liveCamera: "AI கண்காணிப்பு கேமரா"
+    liveCamera: "AI கண்காணிப்பு கேமரா",
+    notepad: "குறிப்பேடு"
   },
   hi: {
     dashboard: "डैशबोर्ड",
@@ -93,7 +95,8 @@ export const TRANSLATIONS = {
     replayCode: "कोड रीप्ले",
     testCases: "परीक्षण मामले",
     customInput: "कस्टम इनपुट",
-    liveCamera: "एआई प्रोक्टर कैमरा"
+    liveCamera: "एआई प्रोक्टर कैमरा",
+    notepad: "नोटपैड"
   },
   te: {
     dashboard: "డాష్‌బోర్డ్",
@@ -124,7 +127,8 @@ export const TRANSLATIONS = {
     replayCode: "కోడ్ రీప్లే",
     testCases: "టెస్ట్ కేసులు",
     customInput: "కస్టమ్ ఇన్‌పుట్",
-    liveCamera: "AI ప్రొక్టర్ కెమెరా"
+    liveCamera: "AI ప్రొక్టర్ కెమెరా",
+    notepad: "నోట్‌ప్యాడ్"
   },
   ml: {
     dashboard: "ഡാഷ്‌ബോർഡ്",
@@ -155,7 +159,8 @@ export const TRANSLATIONS = {
     replayCode: "കോഡ് റീപ്ലേ",
     testCases: "ടെസ്റ്റ് കേസുകൾ",
     customInput: "കസ്റ്റം ഇൻപുട്ട്",
-    liveCamera: "AI പ്രോക്ടർ ക്യാമറ"
+    liveCamera: "AI പ്രോക്ടർ ക്യാമറ",
+    notepad: "നോട്ട്പാഡ്"
   },
   kn: {
     dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
@@ -186,7 +191,8 @@ export const TRANSLATIONS = {
     replayCode: "ಕೋಡ್ ರೀಪ್ಲೇ",
     testCases: "ಟೆಸ್ಟ್ ಕೇಸ್ಗಳು",
     customInput: "ಕಸ್ಟಮ್ ಇನ್‌ಪುಟ್",
-    liveCamera: "AI ಪ್ರೊಕ್ಟರ್ ಕ್ಯಾಮೆರಾ"
+    liveCamera: "AI ಪ್ರೊಕ್ಟರ್ ಕ್ಯಾಮೆರಾ",
+    notepad: "ನೋಟ್‌ಪ್ಯಾಡ್"
   }
 };
 

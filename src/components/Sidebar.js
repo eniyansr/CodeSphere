@@ -1,5 +1,5 @@
 // CodeSphere Pro - Sidebar Menu Component
-import { TRANSLATIONS, updateState } from '../state.js';
+import { TRANSLATIONS, updateState, state } from '../state.js';
 
 export function Sidebar(state) {
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
@@ -12,15 +12,18 @@ export function Sidebar(state) {
       { id: 'exams', label: t.exams, icon: 'clipboard-check' },
       { id: 'practice', label: t.practice, icon: 'code-2' },
       { id: 'battle', label: t.battle, icon: 'zap' },
-      { id: 'certificates', label: t.certificates, icon: 'award' }
+      { id: 'certificates', label: t.certificates, icon: 'award' },
+      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
     ],
     teacher: [
       { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
       { id: 'classroom', label: t.classroom, icon: 'book-open' },
-      { id: 'proctoring', label: t.proctoring, icon: 'eye' }
+      { id: 'proctoring', label: t.proctoring, icon: 'eye' },
+      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
     ],
     admin: [
-      { id: 'admin', label: t.admin, icon: 'shield-check' }
+      { id: 'admin', label: t.admin, icon: 'shield-check' },
+      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
     ]
   };
 
@@ -37,7 +40,7 @@ export function Sidebar(state) {
         
         <nav class="space-y-1" id="sidebar-nav">
           ${activeMenu.map(item => {
-            const isActive = state.activeTab === item.id;
+            const isActive = item.id === 'notepad' ? state.notepadOpen : state.activeTab === item.id;
             return `
               <button 
                 data-tab-id="${item.id}"
@@ -81,7 +84,11 @@ export function bindSidebarEvents() {
   document.querySelectorAll('#sidebar-nav button').forEach(button => {
     button.addEventListener('click', (e) => {
       const tabId = e.currentTarget.getAttribute('data-tab-id');
-      updateState({ activeTab: tabId });
+      if (tabId === 'notepad') {
+        updateState({ notepadOpen: !state.notepadOpen });
+      } else {
+        updateState({ activeTab: tabId });
+      }
     });
   });
 }

@@ -1,5 +1,5 @@
 // CodeSphere Pro - Draggable Floating Lined Notepad Widget
-import { updateState } from '../state.js';
+import { updateState, saveState } from '../state.js';
 
 let isMinimized = false;
 let notepadPosition = { x: null, y: null }; // Will default to bottom-right if null
@@ -31,6 +31,9 @@ export function Notepad(state) {
           <span class="text-xs font-bold text-slate-200 tracking-wide">Scratchpad / Notepad</span>
         </div>
         <div class="flex items-center gap-1.5">
+          <button id="notepad-save-btn" title="Save as file" class="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-indigo-400 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          </button>
           <button id="notepad-clear-btn" title="Clear notes" class="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-rose-400 transition">
             <i data-lucide="trash-2" class="w-3 h-3"></i>
           </button>
@@ -99,9 +102,33 @@ export function bindNotepadEvents(state) {
 
   if (!notepad) return;
 
-  // 1. Textarea Autosave
-  textarea?.addEventListener('keyup', (e) => {
-    updateState({ notepadNotes: e.target.value });
+  // 1. Textarea Autosave (Mutates state directly to prevent full app re-render which causes loss of focus/cursor)
+  textarea?.addEventListener('input', (e) => {
+    state.notepadNotes = e.target.value;
+    saveState();
+  });
+
+  // Save as File
+  document.getElementById('notepad-save-btn')?.addEventListener('click', () => {
+    const text = textarea ? textarea.value : (state.notepadNotes || '');
+    if (!text.trim()) {
+      alert('Cannot save empty notes.');
+      return;
+    }
+    let filename = prompt('Enter filename to save:', 'codesphere_notes.txt');
+    if (filename === null) return; // User cancelled
+    if (!filename.trim()) filename = 'codesphere_notes.txt';
+    if (!filename.endsWith('.txt')) filename += '.txt';
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   });
 
   // 2. Clear Button
