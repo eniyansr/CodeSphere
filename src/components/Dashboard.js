@@ -185,6 +185,57 @@ function renderStudentDashboard(state, t) {
 }
 
 function renderTeacherDashboard(state, t) {
+  // Calculate dynamic stats from active state
+  const totalStudents = state.studentProfiles ? state.studentProfiles.length : 0;
+  
+  let totalSubmissionsCount = 0;
+  let totalPercent = 0;
+  let submissionsCount = 0;
+  
+  state.classes.forEach(c => {
+    c.assignments.forEach(a => {
+      totalSubmissionsCount += (a.submissions ? a.submissions.length : 0);
+      const maxPoints = a.maxPoints || 100;
+      if (a.submissions) {
+        a.submissions.forEach(s => {
+          totalPercent += (s.score / maxPoints) * 100;
+          submissionsCount++;
+        });
+      }
+    });
+  });
+  
+  const avgPercentage = submissionsCount > 0 ? (totalPercent / submissionsCount).toFixed(1) : "0.0";
+
+  const classScores = state.classes.map(c => {
+    let classPercent = 0;
+    let classSubCount = 0;
+    c.assignments.forEach(a => {
+      const maxPoints = a.maxPoints || 100;
+      if (a.submissions) {
+        a.submissions.forEach(s => {
+          classPercent += (s.score / maxPoints) * 100;
+          classSubCount++;
+        });
+      }
+    });
+    const avg = classSubCount > 0 ? Math.round(classPercent / classSubCount) : 0;
+    return {
+      code: c.code,
+      name: c.name.split(': ')[1] || c.name,
+      avg: avg
+    };
+  });
+
+  let highestClassCode = "None";
+  let highestClassAvg = -1;
+  classScores.forEach(cs => {
+    if (cs.avg > highestClassAvg) {
+      highestClassAvg = cs.avg;
+      highestClassCode = cs.code;
+    }
+  });
+
   return `
     <div class="p-6 space-y-6 flex-grow overflow-y-auto">
       
@@ -203,7 +254,7 @@ function renderTeacherDashboard(state, t) {
         <div class="glass-panel p-4.5 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
           <div class="space-y-1">
             <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Supervised Students</span>
-            <div class="text-xl font-bold font-mono text-slate-200">48 Enrolled</div>
+            <div class="text-xl font-bold font-mono text-slate-200">${totalStudents} Enrolled</div>
           </div>
           <div class="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><i data-lucide="users" class="w-5 h-5"></i></div>
         </div>
@@ -211,7 +262,7 @@ function renderTeacherDashboard(state, t) {
         <div class="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-cyan flex items-center justify-between">
           <div class="space-y-1">
             <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Class Pass Ratio</span>
-            <div class="text-xl font-bold font-mono text-accent-cyan">94.2% Percentage</div>
+            <div class="text-xl font-bold font-mono text-accent-cyan">${avgPercentage}% Percentage</div>
           </div>
           <div class="p-2 bg-cyan-500/10 text-accent-cyan rounded-lg"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
         </div>
@@ -219,7 +270,7 @@ function renderTeacherDashboard(state, t) {
         <div class="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-emerald flex items-center justify-between">
           <div class="space-y-1">
             <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tasks Submitted</span>
-            <div class="text-xl font-bold font-mono text-accent-emerald">12 Total Solutions</div>
+            <div class="text-xl font-bold font-mono text-accent-emerald">${totalSubmissionsCount} Total Solutions</div>
           </div>
           <div class="p-2 bg-emerald-500/10 text-accent-emerald rounded-lg"><i data-lucide="file-check-2" class="w-5 h-5"></i></div>
         </div>
@@ -253,43 +304,25 @@ function renderTeacherDashboard(state, t) {
           </h3>
           
           <div class="space-y-3.5 flex-grow">
-            <!-- CS101 -->
-            <div>
-              <div class="flex justify-between text-[11px] text-slate-400 mb-1 font-semibold">
-                <span>CS-101 (Intro to CS)</span>
-                <span class="text-accent-emerald font-bold">89% Avg Score</span>
+            ${classScores.map(cs => `
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1 font-semibold">
+                  <span>${cs.code} (${cs.name})</span>
+                  <span class="text-indigo-400 font-bold">${cs.avg}% Avg Score</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
+                  <div class="bg-indigo-500 h-1.5 rounded-full" style="width: ${cs.avg}%"></div>
+                </div>
               </div>
-              <div class="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                <div class="bg-accent-emerald h-1.5 rounded-full" style="width: 89%"></div>
-              </div>
-            </div>
-
-            <!-- DSA202 -->
-            <div>
-              <div class="flex justify-between text-[11px] text-slate-400 mb-1 font-semibold">
-                <span>DSA-202 (Structures & Algorithms)</span>
-                <span class="text-indigo-400 font-bold">81% Avg Score</span>
-              </div>
-              <div class="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                <div class="bg-indigo-500 h-1.5 rounded-full" style="width: 81%"></div>
-              </div>
-            </div>
-
-            <!-- Custom Exam -->
-            <div>
-              <div class="flex justify-between text-[11px] text-slate-400 mb-1 font-semibold">
-                <span>Midterm Secure Exams</span>
-                <span class="text-accent-cyan font-bold">75% Avg Score</span>
-              </div>
-              <div class="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                <div class="bg-accent-cyan h-1.5 rounded-full" style="width: 75%"></div>
-              </div>
-            </div>
+            `).join('')}
+            ${classScores.length === 0 ? `
+              <div class="text-xs text-slate-500 font-medium text-center py-8">No supervised classes created yet.</div>
+            ` : ''}
           </div>
 
           <div class="mt-4 pt-3 border-t border-slate-950 flex justify-between text-[10px] text-slate-500 font-bold">
-            <span>Highest Class: CS101</span>
-            <span>Total Exams Conducted: 1</span>
+            <span>Highest Class: ${highestClassCode}</span>
+            <span>Total Classes: ${state.classes.length}</span>
           </div>
         </div>
 
@@ -311,19 +344,41 @@ export function initDashboardCharts(state) {
   const ctx = canvas.getContext('2d');
   
   if (state.role === 'teacher') {
-    // Languages usage charts
+    // Languages usage charts calculated dynamically
+    const langCounts = {};
+    state.classes.forEach(c => {
+      c.assignments.forEach(a => {
+        if (a.submissions) {
+          a.submissions.forEach(s => {
+            const lang = s.language ? s.language.toLowerCase() : 'javascript';
+            langCounts[lang] = (langCounts[lang] || 0) + 1;
+          });
+        }
+      });
+    });
+
+    const labels = Object.keys(langCounts).length > 0 
+      ? Object.keys(langCounts).map(l => l.toUpperCase()) 
+      : ['No Submissions'];
+    const data = Object.values(langCounts).length > 0 
+      ? Object.values(langCounts) 
+      : [1];
+    const bgColors = Object.keys(langCounts).length > 0 
+      ? Object.keys(langCounts).map(l => {
+          if (l === 'javascript') return 'rgba(99, 102, 241, 0.65)';
+          if (l === 'python') return 'rgba(6, 182, 212, 0.65)';
+          if (l === 'cpp') return 'rgba(244, 63, 94, 0.65)';
+          return 'rgba(16, 185, 129, 0.65)';
+        }) 
+      : ['rgba(148, 163, 184, 0.15)'];
+
     dashboardChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['JavaScript', 'Python', 'C++', 'SQL'],
+        labels: labels,
         datasets: [{
-          data: [45, 30, 15, 10],
-          backgroundColor: [
-            'rgba(99, 102, 241, 0.65)',
-            'rgba(6, 182, 212, 0.65)',
-            'rgba(244, 63, 94, 0.65)',
-            'rgba(16, 185, 129, 0.65)'
-          ],
+          data: data,
+          backgroundColor: bgColors,
           borderColor: 'rgba(255, 255, 255, 0.05)',
           borderWidth: 1
         }]

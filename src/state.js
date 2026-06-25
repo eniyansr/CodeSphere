@@ -316,12 +316,10 @@ const getSavedState = () => {
     fontSize: "base",
     highContrast: false,
     activeTab: "dashboard",
-    classes: INITIAL_CLASSES,
+    classes: [],
     exams: INITIAL_EXAMS,
     leaderboard: INITIAL_LEADERBOARD,
-    studentProfiles: [
-      { name: "Eniyan Rajesh", email: "eniyan.rajesh@gmail.com", code: "STUD101" }
-    ],
+    studentProfiles: [],
     securityLogs: [
       { timestamp: "2026-06-23 21:05:12", user: "Eniyan Rajesh", event: "Security Initialization", details: "Browser lockdown agent mounted successfully.", severity: "info" }
     ],

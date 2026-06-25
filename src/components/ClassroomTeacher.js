@@ -43,7 +43,7 @@ export function ClassroomTeacher(state) {
                 <div class="text-xs font-bold font-mono text-slate-400 mb-1">${c.code}</div>
                 <div class="text-sm font-bold truncate w-full">${c.name.split(': ')[1] || c.name}</div>
                 <div class="text-[10px] text-slate-500 mt-2 font-medium flex justify-between items-center w-full">
-                  <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> 24 Students</span>
+                  <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> ${state.studentProfiles ? state.studentProfiles.length : 0} Students</span>
                   <span class="font-mono text-indigo-400/80 bg-indigo-500/5 px-1.5 py-0.5 rounded border border-indigo-500/10">${c.inviteCode}</span>
                 </div>
                 ${isSel ? `<div class="absolute right-3 top-3 w-1.5 h-1.5 rounded-full bg-indigo-500"></div>` : ''}

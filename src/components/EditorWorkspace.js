@@ -1,5 +1,5 @@
 // CodeSphere Pro - Professional Monaco Editor Workspace Component (12-Language IDE)
-import { updateState, TRANSLATIONS } from '../state.js';
+import { updateState, TRANSLATIONS, state } from '../state.js';
 
 let activeEditorInstance = null;
 let currentEditorTheme = 'vs-dark';
@@ -796,6 +796,41 @@ export function bindEditorEvents(state) {
     const consoleArea = document.getElementById('console-output-view');
     if (consoleArea) {
       switchTab('out');
+
+      // Update state classes if activeAssignmentId exists
+      if (state.activeAssignmentId) {
+        const studentName = state.googleUser ? state.googleUser.name : 'Eniyan Rajesh';
+        const code = activeEditorInstance ? activeEditorInstance.getValue() : '';
+        const lang = state.activeLanguage || 'javascript';
+        const time = new Date().toISOString().split('T')[0];
+
+        const updatedClasses = state.classes.map(c => {
+          return {
+            ...c,
+            assignments: c.assignments.map(a => {
+              if (a.id === state.activeAssignmentId) {
+                const otherSubs = a.submissions.filter(s => s.studentName !== studentName);
+                return {
+                  ...a,
+                  submissions: [
+                    ...otherSubs,
+                    {
+                      studentName,
+                      score: 0, // initially ungraded
+                      time,
+                      language: lang,
+                      code
+                    }
+                  ]
+                };
+              }
+              return a;
+            })
+          };
+        });
+        updateState({ classes: updatedClasses });
+      }
+
       consoleArea.innerHTML = `
         <div class="space-y-4">
           <div class="text-emerald-400 font-bold text-xs border-b border-slate-800/60 pb-2 flex items-center gap-2">

@@ -232,7 +232,8 @@ export function bindClassroomStudentEvents(state) {
         updateState({
           editorCode: updatedEditor,
           activeLanguage: state.activeLanguage === 'python' ? 'python' : 'javascript',
-          activeTab: 'practice'
+          activeTab: 'practice',
+          activeAssignmentId: assignId
         });
       }
     });
