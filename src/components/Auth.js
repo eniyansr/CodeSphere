@@ -1,5 +1,5 @@
 // CodeSphere Pro - Google OAuth-Style Sign-in with Saved Accounts
-import { state, updateState } from '../state.js';
+import { state, updateState, loadTeacherData, findStudentByCode } from '../state.js';
 
 // ── Auth flow steps ───────────────────────────────────────────────────────────
 // 'landing' | 'chooser' | 'email' | 'password' | 'role'
@@ -377,12 +377,18 @@ export function Auth(state) {
 function completeLogin(role) {
   saveAccount(enteredEmail, selectedAccount, role);
   const userData = getUserData(enteredEmail);
+
+  // Load teacher-specific classes & student profiles from isolated storage
+  const teacherData = role === 'teacher' ? loadTeacherData(enteredEmail) : { classes: [], studentProfiles: state.studentProfiles || [] };
+
   updateState({
     isLoggedIn:     true,
     googleUser:     { name: selectedAccount?.name || enteredEmail, email: enteredEmail },
     role,
     activeTab:      'dashboard',
     notepadContent: userData.notepadContent !== undefined ? userData.notepadContent : '',
+    classes:        teacherData.classes,
+    studentProfiles: role === 'teacher' ? teacherData.studentProfiles : (state.studentProfiles || []),
   });
 }
 
@@ -413,8 +419,8 @@ export function bindAuthEvents() {
     const codeVal = document.getElementById('auth-student-code-input')?.value?.trim()?.toUpperCase();
     if (!codeVal) return;
 
-    const studentProfiles = state.studentProfiles || [];
-    const foundStudent = studentProfiles.find(s => s.code.toUpperCase() === codeVal);
+    // Search across all teacher storage keys for the student
+    const foundStudent = findStudentByCode(codeVal);
 
     if (foundStudent) {
       const studentEmail = foundStudent.email || `${foundStudent.name.toLowerCase().replace(/\s+/g, '')}@codesphere.edu`;
@@ -515,9 +521,11 @@ export function resetAuth() {
   enteredEmail    = '';
   selectedAccount = null;
   updateState({
-    isLoggedIn:  false,
-    googleUser:  null,
-    role:        'teacher',
-    activeTab:   'dashboard'
+    isLoggedIn:      false,
+    googleUser:      null,
+    role:            'teacher',
+    activeTab:       'dashboard',
+    classes:         [],
+    studentProfiles: [],
   });
 }

@@ -1,10 +1,28 @@
 // CodeSphere Pro - Teacher Classroom & Grading Component
-import { updateState, TRANSLATIONS } from '../state.js';
+import { updateState, TRANSLATIONS, saveTeacherData } from '../state.js';
+
+// Helper: save teacher-specific data after every class/student update
+function saveTeacherNow(stateRef, teacherEmail) {
+  saveTeacherData(
+    teacherEmail,
+    stateRef.classes || [],
+    stateRef.studentProfiles || []
+  );
+}
 
 export function ClassroomTeacher(state) {
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
-  const activeClassId = state.activeTeacherClassId || (state.classes[0] ? state.classes[0].id : null);
-  const activeClass = state.classes.find(c => c.id === activeClassId);
+  
+  // Get active teacher details
+  const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
+  const currentTeacherName = state.googleUser ? state.googleUser.name : 'Teacher';
+  
+  // Filter classes and student profiles belonging to the current teacher
+  const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
+  const teacherStudents = (state.studentProfiles || []).filter(s => s.teacherEmail === currentTeacherEmail);
+
+  const activeClassId = state.activeTeacherClassId || (teacherClasses[0] ? teacherClasses[0].id : null);
+  const activeClass = teacherClasses.find(c => c.id === activeClassId);
 
   return `
     <div class="p-6 space-y-6 flex-grow overflow-y-auto">
@@ -30,7 +48,7 @@ export function ClassroomTeacher(state) {
         <!-- Classes listing left -->
         <div class="space-y-2 lg:col-span-1">
           <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block px-1 mb-2">My Supervised Classes</span>
-          ${state.classes.map(c => {
+          ${teacherClasses.map(c => {
             const isSel = c.id === activeClassId;
             return `
               <button 
@@ -43,7 +61,7 @@ export function ClassroomTeacher(state) {
                 <div class="text-xs font-bold font-mono text-slate-400 mb-1">${c.code}</div>
                 <div class="text-sm font-bold truncate w-full">${c.name.split(': ')[1] || c.name}</div>
                 <div class="text-[10px] text-slate-500 mt-2 font-medium flex justify-between items-center w-full">
-                  <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> ${state.studentProfiles ? state.studentProfiles.length : 0} Students</span>
+                  <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3"></i> ${teacherStudents.length} Students</span>
                   <span class="font-mono text-indigo-400/80 bg-indigo-500/5 px-1.5 py-0.5 rounded border border-indigo-500/10">${c.inviteCode}</span>
                 </div>
                 ${isSel ? `<div class="absolute right-3 top-3 w-1.5 h-1.5 rounded-full bg-indigo-500"></div>` : ''}
@@ -157,7 +175,7 @@ export function ClassroomTeacher(state) {
                     </tr>
                   </thead>
                   <tbody>
-                    ${(state.studentProfiles || []).map(student => `
+                    ${teacherStudents.map(student => `
                       <tr class="border-b border-slate-900/60 hover:bg-slate-900/20 text-slate-300">
                         <td class="py-3 font-bold flex items-center space-x-2">
                           <div class="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-indigo-400 border border-slate-700/40">
@@ -176,7 +194,7 @@ export function ClassroomTeacher(state) {
                         </td>
                       </tr>
                     `).join('')}
-                    ${(!state.studentProfiles || state.studentProfiles.length === 0) ? `
+                    ${(!teacherStudents || teacherStudents.length === 0) ? `
                       <tr>
                         <td colspan="4" class="py-6 text-center text-slate-500 font-medium">No students registered yet. Click "Register Student" to generate access codes.</td>
                       </tr>
@@ -300,6 +318,9 @@ export function ClassroomTeacher(state) {
 }
 
 export function bindClassroomTeacherEvents(state) {
+  const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
+  const currentTeacherName = state.googleUser ? state.googleUser.name : 'Teacher';
+
   // Select Class
   document.querySelectorAll('[data-teacher-class-id]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -333,7 +354,8 @@ export function bindClassroomTeacherEvents(state) {
       id: "cls-" + Math.floor(Math.random() * 1000),
       code,
       name: `${code}: ${name}`,
-      teacher: "Dr. Sarah Jenkins",
+      teacher: currentTeacherName,
+      teacherEmail: currentTeacherEmail,
       inviteCode: Math.random().toString(36).substring(2, 9),
       notes: [],
       assignments: []
@@ -343,6 +365,7 @@ export function bindClassroomTeacherEvents(state) {
       classes: [...state.classes, newClass],
       activeTeacherClassId: newClass.id
     });
+    saveTeacherNow({ classes: [...state.classes, newClass], studentProfiles: state.studentProfiles || [] }, currentTeacherEmail);
     classModal?.classList.add('hidden');
     alert(`Classroom ${code} built successfully!`);
   });
@@ -367,7 +390,8 @@ export function bindClassroomTeacherEvents(state) {
     
     if (!title || !desc) return;
 
-    const activeClassId = state.activeTeacherClassId || state.classes[0]?.id;
+    const teacherClasses = state.classes.filter(c => c.teacherEmail === currentTeacherEmail);
+    const activeClassId = state.activeTeacherClassId || teacherClasses[0]?.id;
     if (!activeClassId) return;
 
     const updatedClasses = state.classes.map(c => {
@@ -391,6 +415,7 @@ export function bindClassroomTeacherEvents(state) {
     });
 
     updateState({ classes: updatedClasses });
+    saveTeacherNow({ classes: updatedClasses, studentProfiles: state.studentProfiles || [] }, currentTeacherEmail);
     assModal?.classList.add('hidden');
     alert("Coding Assignment published to subject track!");
   });
@@ -423,6 +448,7 @@ export function bindClassroomTeacherEvents(state) {
       });
 
       updateState({ classes: updatedClasses });
+      saveTeacherNow({ classes: updatedClasses, studentProfiles: state.studentProfiles || [] }, currentTeacherEmail);
     });
   });
 
@@ -466,12 +492,14 @@ export function bindClassroomTeacherEvents(state) {
     const randomHex = Math.floor(0x1000 + Math.random() * 0x8fff).toString(16).toUpperCase();
     const code = `STUD-${randomHex}`;
 
-    const newStudent = { name, email, code };
+    const newStudent = { name, email, code, teacherEmail: currentTeacherEmail };
     const currentProfiles = state.studentProfiles || [];
+    const updatedProfiles = [...currentProfiles, newStudent];
 
     updateState({
-      studentProfiles: [...currentProfiles, newStudent]
+      studentProfiles: updatedProfiles
     });
+    saveTeacherNow({ classes: state.classes || [], studentProfiles: updatedProfiles }, currentTeacherEmail);
 
     // Clear inputs and close modal
     document.getElementById('stud-name-input').value = '';

@@ -185,14 +185,24 @@ function renderStudentDashboard(state, t) {
 }
 
 function renderTeacherDashboard(state, t) {
+  // Get active teacher details - use only the actual logged-in teacher's email
+  const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
+  if (!currentTeacherEmail) {
+    return `<div class="p-6 text-slate-400 text-center">Please log in as a teacher to view this dashboard.</div>`;
+  }
+  
+  // Filter classes and student profiles belonging to the current teacher
+  const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
+  const teacherStudents = (state.studentProfiles || []).filter(s => s.teacherEmail === currentTeacherEmail);
+
   // Calculate dynamic stats from active state
-  const totalStudents = state.studentProfiles ? state.studentProfiles.length : 0;
+  const totalStudents = teacherStudents.length;
   
   let totalSubmissionsCount = 0;
   let totalPercent = 0;
   let submissionsCount = 0;
   
-  state.classes.forEach(c => {
+  teacherClasses.forEach(c => {
     c.assignments.forEach(a => {
       totalSubmissionsCount += (a.submissions ? a.submissions.length : 0);
       const maxPoints = a.maxPoints || 100;
@@ -207,7 +217,7 @@ function renderTeacherDashboard(state, t) {
   
   const avgPercentage = submissionsCount > 0 ? (totalPercent / submissionsCount).toFixed(1) : "0.0";
 
-  const classScores = state.classes.map(c => {
+  const classScores = teacherClasses.map(c => {
     let classPercent = 0;
     let classSubCount = 0;
     c.assignments.forEach(a => {
@@ -303,10 +313,10 @@ function renderTeacherDashboard(state, t) {
             <i data-lucide="compass" class="w-4 h-4 text-indigo-400"></i> Course Curriculum Marks
           </h3>
           
-          <div class="space-y-3.5 flex-grow">
+          <div class="space-y-3.5 flex-grow font-semibold">
             ${classScores.map(cs => `
               <div>
-                <div class="flex justify-between text-[11px] text-slate-400 mb-1 font-semibold">
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
                   <span>${cs.code} (${cs.name})</span>
                   <span class="text-indigo-400 font-bold">${cs.avg}% Avg Score</span>
                 </div>
@@ -322,7 +332,7 @@ function renderTeacherDashboard(state, t) {
 
           <div class="mt-4 pt-3 border-t border-slate-950 flex justify-between text-[10px] text-slate-500 font-bold">
             <span>Highest Class: ${highestClassCode}</span>
-            <span>Total Classes: ${state.classes.length}</span>
+            <span>Total Classes: ${teacherClasses.length}</span>
           </div>
         </div>
 
@@ -345,8 +355,12 @@ export function initDashboardCharts(state) {
   
   if (state.role === 'teacher') {
     // Languages usage charts calculated dynamically
+    const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
+    if (!currentTeacherEmail) return;
+    const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
+
     const langCounts = {};
-    state.classes.forEach(c => {
+    teacherClasses.forEach(c => {
       c.assignments.forEach(a => {
         if (a.submissions) {
           a.submissions.forEach(s => {

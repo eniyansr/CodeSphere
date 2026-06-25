@@ -196,60 +196,61 @@ export const TRANSLATIONS = {
   }
 };
 
-// Initial Core Mock Data
-const INITIAL_CLASSES = [
-  {
-    id: "cls-101",
-    code: "CS101",
-    name: "CS-101: Fundamentals of Computer Science",
-    teacher: "Dr. Sarah Jenkins",
-    inviteCode: "abc456x",
-    notes: [
-      { id: "note-1", title: "Introduction to Complexity & Big-O.pdf", size: "1.2 MB", date: "2026-06-15" },
-      { id: "note-2", title: "Memory Allocation & Pointers in C/C++.pdf", size: "2.4 MB", date: "2026-06-18" }
-    ],
-    assignments: [
-      {
-        id: "assign-101",
-        title: "BST Insertion & In-Order Traversal",
-        desc: "Implement a binary search tree node insertion function and perform an in-order traversal printing the node values. Output should be space-separated integers.",
-        deadline: "2026-07-05 23:59",
-        maxPoints: 100,
-        submissions: [
-          { studentName: "Eniyan Rajesh", score: 95, time: "2026-06-20", language: "python", code: "class Node:\n    def __init__(self, key):\n        self.left = None\n        self.right = None\n        self.val = key\n\ndef insert(root, key):\n    if root is None:\n        return Node(key)\n    else:\n        if root.val == key:\n            return root\n        elif root.val < key:\n            root.right = insert(root.right, key)\n        else:\n            root.left = insert(root.left, key)\n    return root\n\ndef inorder(root):\n    if root:\n        inorder(root.left)\n        print(root.val, end=' ')\n        inorder(root.right)\n\n# Sample run\nr = Node(50)\nr = insert(r, 30)\nr = insert(r, 20)\nr = insert(r, 40)\nr = insert(r, 70)\ninorder(r)" }
-        ]
-      },
-      {
-        id: "assign-102",
-        title: "Dynamic Array Implementation",
-        desc: "Create a basic dynamic resizing array in Python or JavaScript that doubles its size when full.",
-        deadline: "2026-07-12 18:00",
-        maxPoints: 100,
-        submissions: []
-      }
-    ]
-  },
-  {
-    id: "cls-202",
-    code: "DSA202",
-    name: "DSA-202: Data Structures & Algorithms",
-    teacher: "Prof. Alan Turing",
-    inviteCode: "dsa789y",
-    notes: [
-      { id: "note-3", title: "Graph Traversals (BFS & DFS) Lecture Slides.pdf", size: "3.1 MB", date: "2026-06-20" }
-    ],
-    assignments: [
-      {
-        id: "assign-201",
-        title: "Reverse a Singly Linked List",
-        desc: "Write an optimized function to reverse a singly linked list in place. Time complexity must be O(N) and space complexity must be O(1).",
-        deadline: "2026-06-30 23:59",
-        maxPoints: 100,
-        submissions: []
-      }
-    ]
+// Per-teacher data isolation helpers
+// Each teacher gets their own localStorage key for classes & studentProfiles
+export function getTeacherStorageKey(email) {
+  return `codesphere_teacher_${(email || '').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+}
+
+export function loadTeacherData(email) {
+  if (!email) return { classes: [], studentProfiles: [] };
+  try {
+    const raw = localStorage.getItem(getTeacherStorageKey(email));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        classes: parsed.classes || [],
+        studentProfiles: parsed.studentProfiles || []
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load teacher data', e);
   }
-];
+  return { classes: [], studentProfiles: [] };
+}
+
+export function saveTeacherData(email, classes, studentProfiles) {
+  if (!email) return;
+  try {
+    localStorage.setItem(getTeacherStorageKey(email), JSON.stringify({ classes, studentProfiles }));
+  } catch (e) {
+    console.error('Failed to save teacher data', e);
+  }
+}
+
+// Search all teacher storage entries for a student by their access code
+export function findStudentByCode(code) {
+  if (!code) return null;
+  const upperCode = code.toUpperCase();
+  const prefix = 'codesphere_teacher_';
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const profiles = parsed.studentProfiles || [];
+          const found = profiles.find(s => s.code && s.code.toUpperCase() === upperCode);
+          if (found) return found;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to search student by code', e);
+  }
+  return null;
+}
 
 const INITIAL_EXAMS = [
   {
@@ -440,7 +441,27 @@ const getSavedState = () => {
     try {
       const parsed = JSON.parse(local);
       // Merge parsed state with defaults to ensure keys are intact
-      return Object.assign({}, defaultState, parsed);
+      const merged = Object.assign({}, defaultState, parsed);
+
+      // If a teacher is logged in, always load their isolated data (not shared state)
+      if (merged.isLoggedIn && merged.role === 'teacher' && merged.googleUser && merged.googleUser.email) {
+        const teacherKey = `codesphere_teacher_${merged.googleUser.email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        try {
+          const teacherRaw = localStorage.getItem(teacherKey);
+          if (teacherRaw) {
+            const teacherParsed = JSON.parse(teacherRaw);
+            merged.classes = teacherParsed.classes || [];
+            merged.studentProfiles = teacherParsed.studentProfiles || [];
+          } else {
+            merged.classes = [];
+            merged.studentProfiles = [];
+          }
+        } catch (te) {
+          merged.classes = [];
+          merged.studentProfiles = [];
+        }
+      }
+      return merged;
     } catch (e) {
       console.error("Failed to parse local storage", e);
     }
