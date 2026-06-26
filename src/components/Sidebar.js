@@ -18,6 +18,7 @@ export function Sidebar(state) {
     teacher: [
       { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
       { id: 'classroom', label: t.classroom, icon: 'book-open' },
+      { id: 'students', label: t.students || 'Students List', icon: 'users' },
       { id: 'proctoring', label: t.proctoring, icon: 'eye' },
       { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
     ],

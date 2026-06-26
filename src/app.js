@@ -6,6 +6,7 @@ import { Dashboard, initDashboardCharts, bindDashboardEvents } from './component
 import { EditorWorkspace, initEditor, bindEditorEvents } from './components/EditorWorkspace.js';
 import { ClassroomStudent, bindClassroomStudentEvents } from './components/ClassroomStudent.js';
 import { ClassroomTeacher, bindClassroomTeacherEvents } from './components/ClassroomTeacher.js';
+import { TeacherStudents, bindTeacherStudentsEvents } from './components/TeacherStudents.js';
 import { ExamCenter, bindExamCenterEvents } from './components/ExamCenter.js';
 import { ProctoringCenter, bindProctoringCenterEvents } from './components/ProctoringCenter.js';
 import { BattleArena, bindBattleArenaEvents } from './components/BattleArena.js';
@@ -64,6 +65,8 @@ function renderApp(state) {
     viewHTML = ProctoringCenter(state);
   } else if (tab === 'admin') {
     viewHTML = AdminPanel(state);
+  } else if (tab === 'students') {
+    viewHTML = TeacherStudents(state);
   } else if (tab === 'replay_viewer') {
     viewHTML = Replay(state);
   }
@@ -109,6 +112,8 @@ function renderApp(state) {
     bindProctoringCenterEvents(state);
   } else if (tab === 'admin') {
     bindAdminPanelEvents(state);
+  } else if (tab === 'students') {
+    bindTeacherStudentsEvents(state);
   } else if (tab === 'replay_viewer') {
     bindReplayEvents(state);
   }

@@ -203,107 +203,6 @@ export function ClassroomTeacher(state) {
                 </table>
               </div>
             </div>
-
-            <!-- Create Assignment Modal Overlay Dialog (Inlined/Toggleable by script) -->
-            <div id="assignment-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-              <div class="glass-panel w-full max-w-lg rounded-2xl p-6 space-y-4">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                  <h3 class="text-base font-bold text-white flex items-center gap-1.5">
-                    <i data-lucide="file-plus" class="w-5 h-5 text-indigo-400"></i> Add New Coding Assignment
-                  </h3>
-                  <button id="assignment-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                
-                <div class="space-y-3.5 text-xs">
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Assignment Title</label>
-                    <input id="ass-title-input" type="text" placeholder="e.g., Reverse Linked List" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Description & Requirements</label>
-                    <textarea id="ass-desc-input" rows="4" placeholder="Detail parameters, inputs, outputs, and edge conditions..." class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium resize-none"></textarea>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-slate-400 font-semibold mb-1">Due Date</label>
-                      <input id="ass-deadline-input" type="text" placeholder="YYYY-MM-DD HH:MM" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
-                    </div>
-                    <div>
-                      <label class="block text-slate-400 font-semibold mb-1">Max Score</label>
-                      <input id="ass-points-input" type="number" value="100" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
-                  <button id="assignment-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
-                  <button id="assignment-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Publish Task</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Create Classroom Modal Dialog -->
-            <div id="classroom-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-              <div class="glass-panel w-full max-w-md rounded-2xl p-6 space-y-4">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                  <h3 class="text-base font-bold text-white flex items-center gap-1.5">
-                    <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-400"></i> Create A New Subject Class
-                  </h3>
-                  <button id="classroom-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                
-                <div class="space-y-3.5 text-xs">
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Subject Code</label>
-                    <input id="class-code-input" type="text" placeholder="e.g. CS202" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Classroom Name</label>
-                    <input id="class-name-input" type="text" placeholder="e.g. CS-202: Advanced Coding Architectures" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
-                  </div>
-                </div>
-
-                <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
-                  <button id="classroom-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
-                  <button id="classroom-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Build Classroom</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Register Student Modal Dialog -->
-            <div id="student-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-              <div class="glass-panel w-full max-w-md rounded-2xl p-6 space-y-4">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                  <h3 class="text-base font-bold text-white flex items-center gap-1.5">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i> Register Student Profile
-                  </h3>
-                  <button id="student-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                  </button>
-                </div>
-                
-                <div class="space-y-3.5 text-xs">
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Student's Full Name</label>
-                    <input id="stud-name-input" type="text" placeholder="e.g. John Doe" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
-                  </div>
-                  <div>
-                    <label class="block text-slate-400 font-semibold mb-1">Student's Email</label>
-                    <input id="stud-email-input" type="email" placeholder="e.g. john@gmail.com" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
-                  </div>
-                </div>
-
-                <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
-                  <button id="student-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
-                  <button id="student-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Generate Access Profile</button>
-                </div>
-              </div>
-            </div>
-
           ` : `
             <div class="glass-panel p-8 text-center text-slate-400 font-medium">
               No classrooms created. Click "Create Class" on the top right to start a subject block.
@@ -311,6 +210,106 @@ export function ClassroomTeacher(state) {
           `}
         </div>
 
+      </div>
+
+      <!-- Create Assignment Modal Overlay Dialog (Inlined/Toggleable by script) -->
+      <div id="assignment-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" style="display:none">
+        <div class="glass-panel w-full max-w-lg rounded-2xl p-6 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-1.5">
+              <i data-lucide="file-plus" class="w-5 h-5 text-indigo-400"></i> Add New Coding Assignment
+            </h3>
+            <button id="assignment-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-3.5 text-xs">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Assignment Title</label>
+              <input id="ass-title-input" type="text" placeholder="e.g., Reverse Linked List" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+            </div>
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Description & Requirements</label>
+              <textarea id="ass-desc-input" rows="4" placeholder="Detail parameters, inputs, outputs, and edge conditions..." class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium resize-none"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Due Date</label>
+                <input id="ass-deadline-input" type="text" placeholder="YYYY-MM-DD HH:MM" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
+              </div>
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Max Score</label>
+                <input id="ass-points-input" type="number" value="100" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
+            <button id="assignment-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
+            <button id="assignment-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Publish Task</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Classroom Modal Dialog -->
+      <div id="classroom-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" style="display:none">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-400"></i> Create A New Subject Class
+            </h3>
+            <button id="classroom-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-3.5 text-xs">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Subject Code</label>
+              <input id="class-code-input" type="text" placeholder="e.g. CS202" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium font-mono">
+            </div>
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Classroom Name</label>
+              <input id="class-name-input" type="text" placeholder="e.g. CS-202: Advanced Coding Architectures" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+            </div>
+          </div>
+
+          <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
+            <button id="classroom-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
+            <button id="classroom-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Build Classroom</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Register Student Modal Dialog -->
+      <div id="student-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" style="display:none">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-1.5">
+              <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i> Register Student Profile
+            </h3>
+            <button id="student-modal-close" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          
+          <div class="space-y-3.5 text-xs">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Student's Full Name</label>
+              <input id="stud-name-input" type="text" placeholder="e.g. John Doe" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+            </div>
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Student's Email</label>
+              <input id="stud-email-input" type="email" placeholder="e.g. john@gmail.com" class="w-full glass-input p-2.5 rounded-xl text-slate-200 font-medium">
+            </div>
+          </div>
+
+          <div class="flex justify-end items-center gap-2 pt-2 border-t border-slate-800">
+            <button id="student-modal-cancel" class="px-4 py-2 border border-slate-800 hover:border-slate-700 hover:bg-slate-800/40 text-slate-300 font-semibold text-xs rounded-xl">Cancel</button>
+            <button id="student-modal-save" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10">Generate Access Profile</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -335,13 +334,13 @@ export function bindClassroomTeacherEvents(state) {
 
   // Trigger Class Modal
   document.getElementById('teacher-create-class-btn')?.addEventListener('click', () => {
-    classModal?.classList.remove('hidden');
+    if (classModal) classModal.style.display = 'flex';
   });
   document.getElementById('classroom-modal-close')?.addEventListener('click', () => {
-    classModal?.classList.add('hidden');
+    if (classModal) classModal.style.display = 'none';
   });
   document.getElementById('classroom-modal-cancel')?.addEventListener('click', () => {
-    classModal?.classList.add('hidden');
+    if (classModal) classModal.style.display = 'none';
   });
 
   // Save Class
@@ -366,19 +365,19 @@ export function bindClassroomTeacherEvents(state) {
       activeTeacherClassId: newClass.id
     });
     saveTeacherNow({ classes: [...state.classes, newClass], studentProfiles: state.studentProfiles || [] }, currentTeacherEmail);
-    classModal?.classList.add('hidden');
+    if (classModal) classModal.style.display = 'none';
     alert(`Classroom ${code} built successfully!`);
   });
 
   // Trigger Assignment Modal
   document.getElementById('teacher-add-assignment-btn')?.addEventListener('click', () => {
-    assModal?.classList.remove('hidden');
+    if (assModal) assModal.style.display = 'flex';
   });
   document.getElementById('assignment-modal-close')?.addEventListener('click', () => {
-    assModal?.classList.add('hidden');
+    if (assModal) assModal.style.display = 'none';
   });
   document.getElementById('assignment-modal-cancel')?.addEventListener('click', () => {
-    assModal?.classList.add('hidden');
+    if (assModal) assModal.style.display = 'none';
   });
 
   // Save Assignment
@@ -416,7 +415,7 @@ export function bindClassroomTeacherEvents(state) {
 
     updateState({ classes: updatedClasses });
     saveTeacherNow({ classes: updatedClasses, studentProfiles: state.studentProfiles || [] }, currentTeacherEmail);
-    assModal?.classList.add('hidden');
+    if (assModal) assModal.style.display = 'none';
     alert("Coding Assignment published to subject track!");
   });
 
@@ -470,13 +469,13 @@ export function bindClassroomTeacherEvents(state) {
   // Student registration modal trigger
   const studModal = document.getElementById('student-modal');
   document.getElementById('teacher-add-student-btn')?.addEventListener('click', () => {
-    studModal?.classList.remove('hidden');
+    if (studModal) studModal.style.display = 'flex';
   });
   document.getElementById('student-modal-close')?.addEventListener('click', () => {
-    studModal?.classList.add('hidden');
+    if (studModal) studModal.style.display = 'none';
   });
   document.getElementById('student-modal-cancel')?.addEventListener('click', () => {
-    studModal?.classList.add('hidden');
+    if (studModal) studModal.style.display = 'none';
   });
 
   // Save new student profile & generate unique code
@@ -504,7 +503,7 @@ export function bindClassroomTeacherEvents(state) {
     // Clear inputs and close modal
     document.getElementById('stud-name-input').value = '';
     document.getElementById('stud-email-input').value = '';
-    studModal?.classList.add('hidden');
+    if (studModal) studModal.style.display = 'none';
 
     alert(`Student profile registered successfully!\nName: ${name}\nAccess Code: ${code}\nGive this code to the student to let them log in.`);
   });
