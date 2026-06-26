@@ -1,4 +1,8 @@
-// CodeSphere Pro - Global State Manager & Mocks Store
+// CodeSphere Pro - React State Manager & Context Store
+import React, { createContext, useContext, useState, useEffect } from 'https://esm.sh/react@18.2.0';
+import htm from 'https://esm.sh/htm@3.1.1';
+
+export const html = htm.bind(React.createElement);
 
 // Translation Table
 export const TRANSLATIONS = {
@@ -192,7 +196,7 @@ export const TRANSLATIONS = {
     aiMentor: "AI ಕೋಡಿಂಗ್ ಮಾರ್ಗದರ್ಶಕ",
     runCode: "ಕೋಡ್ ಚಲಾಯಿಸು",
     submitCode: "ಸಲ್ಲಿಸು",
-    compileLog: "ಕಂಪೈಲ್ ಲಾಗ್ಸ್",
+    compileLog: "കമ്പൈൽ ലോഗ്സ്",
     replayCode: "ಕೋಡ್ ರೀಪ್ಲೇ",
     testCases: "ಟೆಸ್ಟ್ ಕೇಸ್ಗಳು",
     customInput: "ಕಸ್ಟಮ್ ಇನ್‌ಪುಟ್",
@@ -202,9 +206,7 @@ export const TRANSLATIONS = {
   }
 };
 
-
 // Per-teacher data isolation helpers
-// Each teacher gets their own localStorage key for classes & studentProfiles
 export function getTeacherStorageKey(email) {
   return `codesphere_teacher_${(email || '').toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
 }
@@ -235,7 +237,6 @@ export function saveTeacherData(email, classes, studentProfiles) {
   }
 }
 
-// Search all teacher storage entries for a student by their access code
 export function findStudentByCode(code) {
   if (!code) return null;
   const upperCode = code.toUpperCase();
@@ -263,7 +264,7 @@ const INITIAL_EXAMS = [
   {
     id: "exam-901",
     title: "Data Structures & Algorithms Midterm Exam",
-    duration: 60, // minutes
+    duration: 60,
     deadline: "2026-07-10 12:00",
     questions: [
       {
@@ -311,148 +312,145 @@ const INITIAL_LEADERBOARD = [
   { rank: 5, name: "Sharath Chandra", score: 790, accuracy: "80%", lang: "Go" }
 ];
 
-// Read state from localStorage or load default
-const getSavedState = () => {
-  const defaultState = {
-    role: "student", // default
-    isLoggedIn: false,
-    googleUser: null,
-    notepadOpen: false,
-    notepadNotes: "",
-    language: "en",
-    theme: "dark",
-    fontSize: "base",
-    highContrast: false,
-    activeTab: "dashboard",
-    classes: [],
-    exams: INITIAL_EXAMS,
-    leaderboard: INITIAL_LEADERBOARD,
-    studentProfiles: [],
-    securityLogs: [
-      { timestamp: "2026-06-23 21:05:12", user: "Eniyan Rajesh", event: "Security Initialization", details: "Browser lockdown agent mounted successfully.", severity: "info" }
-    ],
-    editorCode: {
-      javascript: `// CodeSphere JS Compiler Engine\nfunction greet(name) {\n    return "Welcome to CodeSphere Pro, " + name + "!";\n}\nconsole.log(greet("Eniyan"));\n`,
-      python: `# CodeSphere Python Sandbox\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nfor i in range(10):\n    print(f"Fib({i}) = {fibonacci(i)}")\n`,
-      cpp: `// CodeSphere C++ Engine\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello from C++!" << endl;\n    cout << "CodeSphere GCC Engine v12" << endl;\n    return 0;\n}`,
-      c: `// CodeSphere C Engine\n#include <stdio.h>\n\nint main() {\n    printf("Hello from C!\\n");\n    printf("CodeSphere C Engine v1.0\\n");\n    return 0;\n}`,
-      java: `// CodeSphere Java Engine\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Java!");\n        System.out.println("CodeSphere JVM Engine v17");\n        int a = 0, b = 1;\n        System.out.print("Fibonacci: ");\n        for (int i = 0; i < 8; i++) {\n            System.out.print(a + " ");\n            int tmp = a + b; a = b; b = tmp;\n        }\n        System.out.println();\n    }\n}`,
-      typescript: `// CodeSphere TypeScript Engine\ninterface Greeting { name: string; message: string; }\n\nfunction greet(g: Greeting): string {\n    return \`\${g.message}, \${g.name}!\`;\n}\n\nconst user: Greeting = { name: "Eniyan", message: "Welcome to CodeSphere" };\nconsole.log(greet(user));\nfunction identity<T>(arg: T): T { return arg; }\nconsole.log(identity<number>(42));`,
-      php: `<?php\n// CodeSphere PHP Sandbox\n$greeting = "Hello from PHP!";\n$version = "PHP 8.2";\necho $greeting . "\\n";\necho "Running on: " . $version . "\\n";\n$langs = ["Python", "JavaScript", "PHP", "Java"];\nforeach ($langs as $lang) { echo "Language: " . $lang . "\\n"; }\n?>`,
-      ruby: `# CodeSphere Ruby Engine\ndef greet(name)\n  "Hello, \#{name}! Welcome to CodeSphere."\nend\n\nputs greet("Eniyan")\nlangs = ["Ruby", "Python", "JavaScript"]\nlangs.each { |lang| puts "Supported: \#{lang}" }\nresult = (1..5).map { |x| x * x }.select { |x| x > 5 }\nputs "Squares > 5: \#{result.join(', ')}"`,
-      go: `// CodeSphere Go Engine\npackage main\nimport "fmt"\n\nfunc fibonacci(n int) int {\n    if n <= 1 { return n }\n    return fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n    fmt.Println("Hello from Go!")\n    fmt.Println("CodeSphere Go Engine v1.21")\n    for i := 0; i < 8; i++ {\n        fmt.Printf("Fib(%d) = %d\\n", i, fibonacci(i))\n    }\n}`,
-      rust: `// CodeSphere Rust Engine\nfn fibonacci(n: u32) -> u64 {\n    match n {\n        0 => 0, 1 => 1,\n        _ => fibonacci(n-1) + fibonacci(n-2),\n    }\n}\n\nfn main() {\n    println!("Hello from Rust!");\n    println!("CodeSphere Rust Engine v1.75");\n    for i in 0..8 { println!("Fib({}) = {}", i, fibonacci(i)); }\n    let v: Vec<i32> = (1..=5).filter(|x| x%2==0).collect();\n    println!("Evens: {:?}", v);\n}`,
-      swift: `// CodeSphere Swift Engine\nfunc fibonacci(_ n: Int) -> Int {\n    if n <= 1 { return n }\n    return fibonacci(n-1) + fibonacci(n-2)\n}\n\nprint("Hello from Swift!")\nprint("CodeSphere Swift Engine v5.9")\nfor i in 0..<8 { print("Fib(\\(i)) = \\(fibonacci(i))") }\nlet evens = (1...8).filter { $0 % 2 == 0 }.map { $0 * $0 }\nprint("Even squares: \\(evens)")`,
-      html: `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: sans-serif; background: linear-gradient(135deg,#1a1a2e,#16213e); color:#fff; text-align:center; padding:40px; }\n    h1 { color:#6366f1; font-size:2rem; }\n    .card { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:20px; margin:16px auto; max-width:400px; }\n    button { background:#6366f1; color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-size:1rem; }\n  </style>\n</head>\n<body>\n  <h1>Welcome to CodeSphere Pro!</h1>\n  <div class=\"card\">\n    <p>Modify this HTML &amp; CSS code and click Run Code to preview!</p>\n    <button onclick=\"document.querySelector('h1').style.color='#f43f5e'\">Click Me!</button>\n  </div>\n</body>\n</html>`
-    },
-    activeLanguage: "javascript",
-    arenaLanguage: "javascript",
-    activeBattleProblem: 0,
-    battleProblems: [
-      {
-        id: "bp-1",
-        title: "Two Sum",
-        difficulty: "Easy",
-        description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume exactly one solution exists and you may not use the same element twice.",
-        examples: [
-          { input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "nums[0] + nums[1] == 9" },
-          { input: "nums = [3,2,4], target = 6", output: "[1,2]" }
-        ],
-        testCases: [
-          { id: 1, input: "[2,7,11,15], 9", expected: "[0,1]", hidden: false },
-          { id: 2, input: "[3,2,4], 6", expected: "[1,2]", hidden: false },
-          { id: 3, input: "[3,3], 6", expected: "[0,1]", hidden: true }
-        ],
-        constraints: ["2 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9", "Only one valid answer exists."],
-        templates: {
-          javascript: `function twoSum(nums, target) {\n    // Write your solution here\n    \n}\n\nconsole.log(twoSum([2,7,11,15], 9));  // [0,1]\nconsole.log(twoSum([3,2,4], 6));      // [1,2]`,
-          python: `def two_sum(nums, target):\n    # Write your solution here\n    pass\n\nprint(two_sum([2,7,11,15], 9))  # [0, 1]\nprint(two_sum([3,2,4], 6))      # [1, 2]`,
-          cpp: `#include <iostream>\n#include <vector>\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    // Write your solution here\n    return {};\n}\n\nint main() {\n    vector<int> n = {2,7,11,15};\n    auto r = twoSum(n, 9);\n    cout << "[" << r[0] << "," << r[1] << "]" << endl;\n    return 0;\n}`,
-          java: `public class Main {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your solution here\n        return new int[]{};\n    }\n    public static void main(String[] args) {\n        int[] r = new Main().twoSum(new int[]{2,7,11,15}, 9);\n        System.out.println("[" + r[0] + "," + r[1] + "]");\n    }\n}`,
-          c: `#include <stdio.h>\nvoid twoSum(int* nums, int n, int target, int* out) {\n    // Write your solution here\n}\nint main() {\n    int nums[] = {2,7,11,15}; int out[2];\n    twoSum(nums, 4, 9, out);\n    printf("[%d,%d]\\n", out[0], out[1]);\n    return 0;\n}`,
-          go: `package main\nimport "fmt"\n\nfunc twoSum(nums []int, target int) []int {\n    // Write your solution here\n    return nil\n}\n\nfunc main() { fmt.Println(twoSum([]int{2,7,11,15}, 9)) }`,
-          rust: `fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {\n    // Write your solution here\n    vec![]\n}\nfn main() { println!("{:?}", two_sum(vec![2,7,11,15], 9)); }`,
-          typescript: `function twoSum(nums: number[], target: number): number[] {\n    // Write your solution here\n    return [];\n}\nconsole.log(twoSum([2,7,11,15], 9));`,
-          ruby: `def two_sum(nums, target)\n  # Write your solution here\nend\np two_sum([2,7,11,15], 9)`,
-          swift: `func twoSum(_ nums: [Int], _ target: Int) -> [Int] {\n    // Write your solution here\n    return []\n}\nprint(twoSum([2,7,11,15], 9))`
-        }
-      },
-      {
-        id: "bp-2",
-        title: "Reverse a String",
-        difficulty: "Easy",
-        description: "Write a function that reverses a string in-place. The input string is given as an array of characters s. You must do this with O(1) extra memory.",
-        examples: [
-          { input: 's = "hello"', output: '"olleh"' },
-          { input: 's = "abcde"', output: '"edcba"' }
-        ],
-        testCases: [
-          { id: 1, input: '"hello"', expected: '"olleh"', hidden: false },
-          { id: 2, input: '"abcde"', expected: '"edcba"', hidden: false },
-          { id: 3, input: '"A"', expected: '"A"', hidden: true }
-        ],
-        constraints: ["1 <= s.length <= 10^5", "s[i] is a printable ASCII character."],
-        templates: {
-          javascript: `function reverseString(s) {\n    // Write your solution here\n    \n}\nlet s = \"hello\".split(\"\");\nreverseString(s);\nconsole.log(s.join(\"\"));`,
-          python: `def reverse_string(s):\n    # Write your solution here\n    pass\ns = list(\"hello\")\nreverse_string(s)\nprint(''.join(s))`,
-          cpp: `#include <iostream>\n#include <vector>\nusing namespace std;\nvoid reverseString(vector<char>& s) {\n    // Write your solution here\n}\nint main() {\n    vector<char> s = {'h','e','l','l','o'};\n    reverseString(s);\n    for(char c:s) cout<<c; cout<<endl;\n}`,
-          java: `public class Main {\n    public void reverseString(char[] s) {\n        // Write your solution here\n    }\n    public static void main(String[] args) {\n        char[] s = \"hello\".toCharArray();\n        new Main().reverseString(s);\n        System.out.println(new String(s));\n    }\n}`,
-          c: `#include <stdio.h>\n#include <string.h>\nvoid reverseString(char* s, int len) {\n    // Write your solution here\n}\nint main() { char s[] = \"hello\"; reverseString(s, strlen(s)); printf(\"%s\\n\", s); }`,
-          go: `package main\nimport \"fmt\"\nfunc reverseString(s []byte) {\n    // Write your solution here\n}\nfunc main() { s := []byte(\"hello\"); reverseString(s); fmt.Println(string(s)) }`,
-          rust: `fn reverse_string(s: &mut Vec<char>) {\n    // Write your solution here\n}\nfn main() { let mut s: Vec<char> = \"hello\".chars().collect(); reverse_string(&mut s); println!(\"{}\", s.iter().collect::<String>()); }`,
-          typescript: `function reverseString(s: string[]): void {\n    // Write your solution here\n}\nlet s = \"hello\".split(\"\"); reverseString(s); console.log(s.join(\"\"));`,
-          ruby: `def reverse_string(s)\n  # Write your solution here\nend\ns = \"hello\".chars; reverse_string(s); puts s.join`,
-          swift: `func reverseString(_ s: inout [Character]) {\n    // Write your solution here\n}\nvar s = Array(\"hello\"); reverseString(&s); print(String(s))`
-        }
-      },
-      {
-        id: "bp-3",
-        title: "FizzBuzz",
-        difficulty: "Easy",
-        description: "For each number from 1 to n: print FizzBuzz if divisible by both 3 and 5, Fizz if divisible by 3, Buzz if divisible by 5, otherwise the number itself as a string.",
-        examples: [
-          { input: "n = 5", output: '"1","2","Fizz","4","Buzz"' },
-          { input: "n = 3", output: '"1","2","Fizz"' }
-        ],
-        testCases: [
-          { id: 1, input: "5", expected: "1 2 Fizz 4 Buzz", hidden: false },
-          { id: 2, input: "15", expected: "FizzBuzz at position 15", hidden: false },
-          { id: 3, input: "1", expected: "1", hidden: true }
-        ],
-        constraints: ["1 <= n <= 10^4"],
-        templates: {
-          javascript: `function fizzBuzz(n) {\n    for (let i = 1; i <= n; i++) {\n        // Write your solution here\n        console.log(i);\n    }\n}\nfizzBuzz(15);`,
-          python: `def fizz_buzz(n):\n    for i in range(1, n+1):\n        # Write your solution here\n        print(i)\n\nfizz_buzz(15)`,
-          cpp: `#include <iostream>\nusing namespace std;\nvoid fizzBuzz(int n) {\n    for(int i=1;i<=n;i++) {\n        // Write your solution here\n        cout << i << endl;\n    }\n}\nint main() { fizzBuzz(15); }`,
-          java: `public class Main {\n    public static void main(String[] args) {\n        for(int i=1;i<=15;i++) {\n            // Write your solution here\n            System.out.println(i);\n        }\n    }\n}`,
-          c: `#include <stdio.h>\nvoid fizzBuzz(int n) {\n    for(int i=1;i<=n;i++) {\n        // Write your solution here\n        printf(\"%d\\n\", i);\n    }\n}\nint main() { fizzBuzz(15); }`,
-          go: `package main\nimport \"fmt\"\nfunc main() {\n    for i:=1;i<=15;i++ {\n        // Write your solution here\n        fmt.Println(i)\n    }\n}`,
-          rust: `fn main() {\n    for i in 1..=15 {\n        // Write your solution here\n        println!(\"{}\", i);\n    }\n}`,
-          typescript: `for(let i=1;i<=15;i++) {\n    // Write your solution here\n    console.log(i);\n}`,
-          ruby: `(1..15).each do |i|\n  # Write your solution here\n  puts i\nend`,
-          swift: `for i in 1...15 {\n    // Write your solution here\n    print(i)\n}`
-        }
+const defaultState = {
+  role: "student",
+  isLoggedIn: false,
+  googleUser: null,
+  notepadOpen: false,
+  notepadNotes: "",
+  language: "en",
+  theme: "dark",
+  fontSize: "base",
+  highContrast: false,
+  activeTab: "dashboard",
+  classes: [],
+  exams: INITIAL_EXAMS,
+  leaderboard: INITIAL_LEADERBOARD,
+  studentProfiles: [],
+  securityLogs: [
+    { timestamp: "2026-06-23 21:05:12", user: "Eniyan Rajesh", event: "Security Initialization", details: "Browser lockdown agent mounted successfully.", severity: "info" }
+  ],
+  editorCode: {
+    javascript: `// CodeSphere JS Compiler Engine\nfunction greet(name) {\n    return "Welcome to CodeSphere Pro, " + name + "!";\n}\nconsole.log(greet("Eniyan"));\n`,
+    python: `# CodeSphere Python Sandbox\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nfor i in range(10):\n    print(f"Fib({i}) = {fibonacci(i)}")\n`,
+    cpp: `// CodeSphere C++ Engine\n#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello from C++!" << endl;\n    cout << "CodeSphere GCC Engine v12" << endl;\n    return 0;\n}`,
+    c: `// CodeSphere C Engine\n#include <stdio.h>\n\nint main() {\n    printf("Hello from C!\\n");\n    printf("CodeSphere C Engine v1.0\\n");\n    return 0;\n}`,
+    java: `// CodeSphere Java Engine\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from Java!");\n        System.out.println("CodeSphere JVM Engine v17");\n        int a = 0, b = 1;\n        System.out.print("Fibonacci: ");\n        for (int i = 0; i < 8; i++) {\n            System.out.print(a + " ");\n            int tmp = a + b; a = b; b = tmp;\n        }\n        System.out.println();\n    }\n}`,
+    typescript: `// CodeSphere TypeScript Engine\ninterface Greeting { name: string; message: string; }\n\nfunction greet(g: Greeting): string {\n    return \`\${g.message}, \${g.name}!\`;\n}\n\nconst user: Greeting = { name: "Eniyan", message: "Welcome to CodeSphere" };\nconsole.log(greet(user));\nfunction identity<T>(arg: T): T { return arg; }\nconsole.log(identity<number>(42));`,
+    php: `<?php\n// CodeSphere PHP Sandbox\n$greeting = "Hello from PHP!";\n$version = "PHP 8.2";\necho $greeting . "\\n";\necho "Running on: " . $version . "\\n";\n$langs = ["Python", "JavaScript", "PHP", "Java"];\nforeach ($langs as $lang) { echo "Language: " . $lang . "\\n"; }\n?>`,
+    ruby: `# CodeSphere Ruby Engine\ndef greet(name)\n  "Hello, \#{name}! Welcome to CodeSphere."\nend\n\nputs greet("Eniyan")\nlangs = ["Ruby", "Python", "JavaScript"]\nlangs.each { |lang| puts "Supported: \#{lang}" }\nresult = (1..5).map { |x| x * x }.select { |x| x > 5 }\nputs "Squares > 5: \#{result.join(', ')}"`,
+    go: `// CodeSphere Go Engine\npackage main\nimport "fmt"\n\nfunc fibonacci(n int) int {\n    if n <= 1 { return n }\n    return fibonacci(n-1) + fibonacci(n-2)\n}\n\nfunc main() {\n    fmt.Println("Hello from Go!")\n    fmt.Println("CodeSphere Go Engine v1.21")\n    for i := 0; i < 8; i++ {\n        fmt.Printf("Fib(%d) = %d\\n", i, fibonacci(i))\n    }\n}`,
+    rust: `// CodeSphere Rust Engine\nfn fibonacci(n: u32) -> u64 {\n    match n {\n        0 => 0, 1 => 1,\n        _ => fibonacci(n-1) + fibonacci(n-2),\n    }\n}\n\nfn main() {\n    println!("Hello from Rust!");\n    println!("CodeSphere Rust Engine v1.75");\n    for i in 0..8 { println!("Fib({}) = {}", i, fibonacci(i)); }\n    let v: Vec<i32> = (1..=5).filter(|x| x%2==0).collect();\n    println!("Evens: {:?}", v);\n}`,
+    swift: `// CodeSphere Swift Engine\nfunc fibonacci(_ n: Int) -> Int {\n    if n <= 1 { return n }\n    return fibonacci(n-1) + fibonacci(n-2)\n}\n\nprint("Hello from Swift!")\nprint("CodeSphere Swift Engine v5.9")\nfor i in 0..<8 { print("Fib(\\(i)) = \\(fibonacci(i))") }\nlet evens = (1...8).filter { $0 % 2 == 0 }.map { $0 * $0 }\nprint("Even squares: \\(evens)")`,
+    html: `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: sans-serif; background: linear-gradient(135deg,#1a1a2e,#16213e); color:#fff; text-align:center; padding:40px; }\n    h1 { color:#6366f1; font-size:2rem; }\n    .card { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:20px; margin:16px auto; max-width:400px; }\n    button { background:#6366f1; color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-size:1rem; }\n  </style>\n</head>\n<body>\n  <h1>Welcome to CodeSphere Pro!</h1>\n  <div class=\"card\">\n    <p>Modify this HTML &amp; CSS code and click Run Code to preview!</p>\n    <button onclick=\"document.querySelector('h1').style.color='#f43f5e'\">Click Me!</button>\n  </div>\n</body>\n</html>`
+  },
+  activeLanguage: "javascript",
+  arenaLanguage: "javascript",
+  activeBattleProblem: 0,
+  battleProblems: [
+    {
+      id: "bp-1",
+      title: "Two Sum",
+      difficulty: "Easy",
+      description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume exactly one solution exists and you may not use the same element twice.",
+      examples: [
+        { input: "nums = [2,7,11,15], target = 9", output: "[0,1]", explanation: "nums[0] + nums[1] == 9" },
+        { input: "nums = [3,2,4], target = 6", output: "[1,2]" }
+      ],
+      testCases: [
+        { id: 1, input: "[2,7,11,15], 9", expected: "[0,1]", hidden: false },
+        { id: 2, input: "[3,2,4], 6", expected: "[1,2]", hidden: false },
+        { id: 3, input: "[3,3], 6", expected: "[0,1]", hidden: true }
+      ],
+      constraints: ["2 <= nums.length <= 10^4", "-10^9 <= nums[i] <= 10^9", "Only one valid answer exists."],
+      templates: {
+        javascript: `function twoSum(nums, target) {\n    // Write your solution here\n    \n}\n\nconsole.log(twoSum([2,7,11,15], 9));  // [0,1]\nconsole.log(twoSum([3,2,4], 6));      // [1,2]`,
+        python: `def two_sum(nums, target):\n    # Write your solution here\n    pass\n\nprint(two_sum([2,7,11,15], 9))  # [0, 1]\nprint(two_sum([3,2,4], 6))      # [1, 2]`,
+        cpp: `#include <iostream>\n#include <vector>\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    // Write your solution here\n    return {};\n}\n\nint main() {\n    vector<int> n = {2,7,11,15};\n    auto r = twoSum(n, 9);\n    cout << "[" << r[0] << "," << r[1] << "]" << endl;\n    return 0;\n}`,
+        java: `public class Main {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your solution here\n        return new int[]{};\n    }\n    public static void main(String[] args) {\n        int[] r = new Main().twoSum(new int[]{2,7,11,15}, 9);\n        System.out.println("[" + r[0] + "," + r[1] + "]");\n    }\n}`,
+        c: `#include <stdio.h>\nvoid twoSum(int* nums, int n, int target, int* out) {\n    // Write your solution here\n}\nint main() {\n    int nums[] = {2,7,11,15}; int out[2];\n    twoSum(nums, 4, 9, out);\n    printf("[%d,%d]\\n", out[0], out[1]);\n    return 0;\n}`,
+        go: `package main\nimport "fmt"\n\nfunc twoSum(nums []int, target int) []int {\n    // Write your solution here\n    return nil\n}\n\nfunc main() { fmt.Println(twoSum([]int{2,7,11,15}, 9)) }`,
+        rust: `fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {\n    // Write your solution here\n    vec![]\n}\nfn main() { println!("{:?}", two_sum(vec![2,7,11,15], 9)); }`,
+        typescript: `function twoSum(nums: number[], target: number): number[] {\n    // Write your solution here\n    return [];\n}\nconsole.log(twoSum([2,7,11,15], 9));`,
+        ruby: `def two_sum(nums, target)\n  # Write your solution here\nend\np two_sum([2,7,11,15], 9)`,
+        swift: `func twoSum(_ nums: [Int], _ target: Int) -> [Int] {\n    // Write your solution here\n    return []\n}\nprint(twoSum([2,7,11,15], 9))`
       }
-    ],
-    examStatus: null, // "taking", "submitted"
-    examTimer: 0,
-    examAnswers: {},
-    keystrokes: [], // array of {time, val} for code replay
-    warningsCount: 0,
-    isLockdownActive: false,
-    webcamActive: true,
-  };
+    },
+    {
+      id: "bp-2",
+      title: "Reverse a String",
+      difficulty: "Easy",
+      description: "Write a function that reverses a string in-place. The input string is given as an array of characters s. You must do this with O(1) extra memory.",
+      examples: [
+        { input: 's = "hello"', output: '"olleh"' },
+        { input: 's = "abcde"', output: '"edcba"' }
+      ],
+      testCases: [
+        { id: 1, input: '"hello"', expected: '"olleh"', hidden: false },
+        { id: 2, input: '"abcde"', expected: '"edcba"', hidden: false },
+        { id: 3, input: '"A"', expected: '"A"', hidden: true }
+      ],
+      constraints: ["1 <= s.length <= 10^5", "s[i] is a printable ASCII character."],
+      templates: {
+        javascript: `function reverseString(s) {\n    // Write your solution here\n    \n}\nlet s = \"hello\".split(\"\");\nreverseString(s);\nconsole.log(s.join(\"\"));`,
+        python: `def reverse_string(s):\n    # Write your solution here\n    pass\ns = list(\"hello\")\nreverse_string(s)\nprint(''.join(s))`,
+        cpp: `#include <iostream>\n#include <vector>\nusing namespace std;\nvoid reverseString(vector<char>& s) {\n    // Write your solution here\n}\nint main() {\n    vector<char> s = {'h','e','l','l','o'};\n    reverseString(s);\n    for(char c:s) cout<<c; cout<<endl;\n}`,
+        java: `public class Main {\n    public void reverseString(char[] s) {\n        // Write your solution here\n    }\n    public static void main(String[] args) {\n        char[] s = \"hello\".toCharArray();\n        new Main().reverseString(s);\n        System.out.println(new String(s));\n    }\n}`,
+        c: `#include <stdio.h>\n#include <string.h>\nvoid reverseString(char* s, int len) {\n    // Write your solution here\n}\nint main() { char s[] = \"hello\"; reverseString(s, strlen(s)); printf(\"%s\\n\", s); }`,
+        go: `package main\nimport \"fmt\"\nfunc reverseString(s []byte) {\n    // Write your solution here\n}\nfunc main() { s := []byte(\"hello\"); reverseString(s); fmt.Println(string(s)) }`,
+        rust: `fn reverse_string(s: &mut Vec<char>) {\n    // Write your solution here\n}\nfn main() { let mut s: Vec<char> = \"hello\".chars().collect(); reverse_string(&mut s); println!(\"{}\", s.iter().collect::<String>()); }`,
+        typescript: `function reverseString(s: string[]): void {\n    // Write your solution here\n}\nlet s = \"hello\".split(\"\"); reverseString(s); console.log(s.join(\"\"));`,
+        ruby: `def reverse_string(s)\n  # Write your solution here\nend\ns = \"hello\".chars; reverse_string(s); puts s.join`,
+        swift: `func reverseString(_ s: inout [Character]) {\n    // Write your solution here\n}\nvar s = Array(\"hello\"); reverseString(&s); print(String(s))`
+      }
+    },
+    {
+      id: "bp-3",
+      title: "FizzBuzz",
+      difficulty: "Easy",
+      description: "For each number from 1 to n: print FizzBuzz if divisible by both 3 and 5, Fizz if divisible by 3, Buzz if divisible by 5, otherwise the number itself as a string.",
+      examples: [
+        { input: "n = 5", output: '"1","2","Fizz","4","Buzz"' },
+        { input: "n = 3", output: '"1","2","Fizz"' }
+      ],
+      testCases: [
+        { id: 1, input: "5", expected: "1 2 Fizz 4 Buzz", hidden: false },
+        { id: 2, input: "15", expected: "FizzBuzz at position 15", hidden: false },
+        { id: 3, input: "1", expected: "1", hidden: true }
+      ],
+      constraints: ["1 <= n <= 10^4"],
+      templates: {
+        javascript: `function fizzBuzz(n) {\n    for (let i = 1; i <= n; i++) {\n        // Write your solution here\n        console.log(i);\n    }\n}\nfizzBuzz(15);`,
+        python: `def fizz_buzz(n):\n    for i in range(1, n+1):\n        # Write your solution here\n        print(i)\n\nfizz_buzz(15)`,
+        cpp: `#include <iostream>\nusing namespace std;\nvoid fizzBuzz(int n) {\n    for(int i=1;i<=n;i++) {\n        // Write your solution here\n        cout << i << endl;\n    }\n}\nint main() { fizzBuzz(15); }`,
+        java: `public class Main {\n    public static void main(String[] args) {\n        for(int i=1;i<=15;i++) {\n            // Write your solution here\n            System.out.println(i);\n        }\n    }\n}`,
+        c: `#include <stdio.h>\nvoid fizzBuzz(int n) {\n    for(int i=1;i<=n;i++) {\n        // Write your solution here\n        printf(\"%d\\n\", i);\n    }\n}\nint main() { fizzBuzz(15); }`,
+        go: `package main\nimport \"fmt\"\nfunc main() {\n    for i:=1;i<=15;i++ {\n        // Write your solution here\n        fmt.Println(i)\n    }\n}`,
+        rust: `fn main() {\n    for i in 1..=15 {\n        // Write your solution here\n        println!(\"{}\", i);\n    }\n}`,
+        typescript: `for(let i=1;i<=15;i++) {\n    // Write your solution here\n    console.log(i);\n}`,
+        ruby: `(1..15).each do |i|\n  # Write your solution here\n  puts i\nend`,
+        swift: `for i in 1...15 {\n    // Write your solution here\n    print(i)\n}`
+      }
+    }
+  ],
+  examStatus: null,
+  examTimer: 0,
+  examAnswers: {},
+  keystrokes: [],
+  warningsCount: 0,
+  isLockdownActive: false,
+  webcamActive: true,
+};
 
+const getSavedState = () => {
   const local = localStorage.getItem("codesphere_state");
   if (local) {
     try {
       const parsed = JSON.parse(local);
-      // Merge parsed state with defaults to ensure keys are intact
       const merged = Object.assign({}, defaultState, parsed);
 
-      // If a teacher is logged in, always load their isolated data (not shared state)
       if (merged.isLoggedIn && merged.role === 'teacher' && merged.googleUser && merged.googleUser.email) {
-        const teacherKey = `codesphere_teacher_${merged.googleUser.email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        const teacherKey = getTeacherStorageKey(merged.googleUser.email);
         try {
           const teacherRaw = localStorage.getItem(teacherKey);
           if (teacherRaw) {
@@ -473,33 +471,67 @@ const getSavedState = () => {
       console.error("Failed to parse local storage", e);
     }
   }
-
   return defaultState;
 };
 
+// Create React Context for App State
+const AppStateContext = createContext();
 
-export const state = getSavedState();
+export function AppStateProvider({ children }) {
+  const [appState, setAppState] = useState(() => getSavedState());
 
-// Save state to localStorage
-export function saveState() {
-  localStorage.setItem("codesphere_state", JSON.stringify(state));
+  const updateState = (newState) => {
+    setAppState((prev) => {
+      const merged = { ...prev, ...newState };
+      // Save global state credentials
+      localStorage.setItem("codesphere_state", JSON.stringify({
+        role: merged.role,
+        isLoggedIn: merged.isLoggedIn,
+        googleUser: merged.googleUser,
+        notepadOpen: merged.notepadOpen,
+        notepadNotes: merged.notepadNotes,
+        language: merged.language,
+        theme: merged.theme,
+        fontSize: merged.fontSize,
+        highContrast: merged.highContrast,
+        activeTab: merged.activeTab,
+        examStatus: merged.examStatus,
+        examTimer: merged.examTimer,
+        examAnswers: merged.examAnswers,
+        keystrokes: merged.keystrokes,
+        warningsCount: merged.warningsCount,
+        isLockdownActive: merged.isLockdownActive,
+        webcamActive: merged.webcamActive,
+        activeLanguage: merged.activeLanguage,
+        arenaLanguage: merged.arenaLanguage,
+        activeBattleProblem: merged.activeBattleProblem
+      }));
+      return merged;
+    });
+  };
+
+  const saveTeacherNow = (classes, studentProfiles, email) => {
+    if (!email) return;
+    saveTeacherData(email, classes, studentProfiles);
+    setAppState((prev) => ({
+      ...prev,
+      classes,
+      studentProfiles
+    }));
+  };
+
+  const resetStore = () => {
+    localStorage.removeItem("codesphere_state");
+    window.location.reload();
+  };
+
+  return html`
+    <${AppStateContext.Provider} value=${{ state: appState, updateState, saveTeacherNow, resetStore }}>
+      ${children}
+    <//>
+  `;
 }
 
-// Callbacks array for react-like re-renders
-const listeners = [];
-
-export function subscribe(callback) {
-  listeners.push(callback);
-}
-
-export function updateState(newState) {
-  Object.assign(state, newState);
-  saveState();
-  listeners.forEach(callback => callback(state));
-}
-
-// Reset store to default mocks
-export function resetStore() {
-  localStorage.removeItem("codesphere_state");
-  window.location.reload();
+export function useAppState() {
+  return useContext(AppStateContext);
 }
