@@ -1,9 +1,9 @@
 // CodeSphere Pro - Admin Control Panel Component (React Edition)
 import React, { useState } from 'https://esm.sh/react@18.2.0';
-import { html, useAppState, TRANSLATIONS, resetStore } from '../state.js';
+import { html, useAppState, TRANSLATIONS } from '../state.js';
 
 export function AdminPanel() {
-  const { state, updateState } = useAppState();
+  const { state, updateState, resetStore } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
 
   const [searchQuery, setSearchQuery] = useState('');

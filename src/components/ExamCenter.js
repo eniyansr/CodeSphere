@@ -251,7 +251,7 @@ export function ExamCenter() {
                 <i data-lucide="eye" className="w-4 h-4 text-rose-500 animate-pulse"></i>
                 AI Eye-Tracker Feed
               </span>
-              <span className={`text-[9px] font-mono ${proctorColor} font-bold animate-pulse`}>Active</span>
+              <span className=${`text-[9px] font-mono ${proctorColor} font-bold animate-pulse`}>Active</span>
             </div>
 
             <!-- Video simulation panel -->
@@ -278,7 +278,7 @@ export function ExamCenter() {
             <div className="text-[10px] font-semibold text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-slate-900">
               <div className="flex justify-between">
                 <span>Status:</span>
-                <span className={`${proctorColor} font-mono uppercase`}${proctorMsg}</span>
+                <span className=${`${proctorColor} font-mono uppercase`}>${proctorMsg}</span>
               </div>
             </div>
           </div>
@@ -454,7 +454,7 @@ export function ExamCenter() {
         
         <div className="glass-panel p-8 rounded-3xl border border-slate-800 text-center space-y-6">
           
-          <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center shadow-lg
+          <div className=${`w-16 h-16 rounded-full mx-auto flex items-center justify-center shadow-lg
             ${isPassed ? 'bg-emerald-500/10 text-accent-emerald shadow-emerald-500/10' : 'bg-rose-500/10 text-accent-rose shadow-rose-500/10'}`}>
             <i data-lucide=${isPassed ? 'check-circle-2' : 'x-circle'} className="w-8 h-8"></i>
           </div>
