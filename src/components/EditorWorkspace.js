@@ -164,10 +164,18 @@ export function EditorWorkspace() {
       } 
       else if (activeLang === 'python') {
         setExecutionMessage('Loading Pyodide WASM engine...');
-        if (typeof window.loadPyodide === 'undefined') {
-          throw new Error('Pyodide CDN not loaded. Ensure internet connection.');
-        }
         if (!window.pyodideEnv) {
+          // Load Pyodide dynamically on first Python run
+          if (!window._pyodideLoading) {
+            window._pyodideLoading = new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+              script.onload = resolve;
+              script.onerror = () => reject(new Error('Failed to load Pyodide CDN'));
+              document.head.appendChild(script);
+            });
+          }
+          await window._pyodideLoading;
           window.pyodideEnv = await window.loadPyodide();
         }
         const py = window.pyodideEnv;
