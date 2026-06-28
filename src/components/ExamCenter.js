@@ -1,6 +1,6 @@
 // CodeSphere Pro - Examination Center & Security Lockdown Module (React Edition)
 import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
-import Editor from 'https://esm.sh/@monaco-editor/react';
+import Editor from 'https://esm.sh/@monaco-editor/react@4.6.0?deps=react@18.2.0,react-dom@18.2.0';
 import { html, useAppState, TRANSLATIONS } from '../state.js';
 
 export function ExamCenter() {
