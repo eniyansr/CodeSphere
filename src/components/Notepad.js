@@ -12,8 +12,6 @@ export function Notepad() {
   const startPos = useRef({ x: 0, y: 0 });
   const initialPos = useRef({ x: 0, y: 0 });
 
-  if (!state.isLoggedIn || !state.notepadOpen) return '';
-
   const displayStyle = position.x !== null 
     ? { position: 'fixed', left: `${position.x}px`, top: `${position.y}px`, margin: 0 }
     : { position: 'fixed', right: '24px', bottom: '24px' };
@@ -106,6 +104,8 @@ export function Notepad() {
       document.removeEventListener('touchend', dragEnd);
     };
   }, [activeDrag]);
+
+  if (!state.isLoggedIn || !state.notepadOpen) return '';
 
   return html`
     <div 
