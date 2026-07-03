@@ -15,8 +15,8 @@ export function Notepad() {
   if (!state.isLoggedIn || !state.notepadOpen) return '';
 
   const displayStyle = position.x !== null 
-    ? `position: fixed; left: ${position.x}px; top: ${position.y}px; margin: 0;`
-    : `position: fixed; right: 24px; bottom: 24px;`;
+    ? { position: 'fixed', left: `${position.x}px`, top: `${position.y}px`, margin: 0 }
+    : { position: 'fixed', right: '24px', bottom: '24px' };
 
   const handleNotesChange = (e) => {
     updateState({ notepadNotes: e.target.value });
@@ -114,7 +114,7 @@ export function Notepad() {
       className=${`w-80 glass-panel border border-slate-700/60 rounded-2xl shadow-glass flex flex-col z-50 overflow-hidden group select-none transition-all duration-150 ${
         activeDrag ? 'shadow-glow-indigo scale-[1.01]' : ''
       }`}
-      style=${`${displayStyle} transform: translate3d(0,0,0); height: ${minimized ? '44px' : '400px'};`}
+      style=${{ ...displayStyle, transform: 'translate3d(0,0,0)', height: minimized ? '44px' : '400px' }}
     >
       <!-- Notepad Title Bar (Drag Handle) -->
       <div 
