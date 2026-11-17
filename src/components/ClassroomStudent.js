@@ -1,63 +1,99 @@
 // CodeSphere Pro - Student Classroom Component (React Edition)
-import React, { useState } from 'https://esm.sh/react@18.2.0';
+import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
+
+// Central API base
+const API_BASE = 'https://codesphere-api.eniyansr31.workers.dev';
 
 export function ClassroomStudent() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
   
   const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Active clicked class ID
   const activeClassId = state.activeStudentClassId || (state.classes[0] ? state.classes[0].id : null);
   const activeClass = state.classes.find(c => c.id === activeClassId);
 
+  // Refresh class data from API to pick up new assignments added by teacher
+  const refreshClassFromAPI = useCallback(async (cls) => {
+    if (!cls || !cls.inviteCode) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/classes/lookup?inviteCode=${encodeURIComponent(cls.inviteCode)}`);
+      const data = await res.json();
+      if (data.found && data.class) {
+        const fresh = data.class;
+        // Replace the stale local copy with fresh data from KV
+        const updatedClasses = state.classes.map(c =>
+          c.inviteCode === fresh.inviteCode ? { ...c, ...fresh } : c
+        );
+        updateState({ classes: updatedClasses });
+      }
+    } catch (err) {
+      console.warn('Could not refresh class data from API:', err);
+    }
+    setRefreshing(false);
+  }, [activeClassId]);
+
+  // On mount: refresh ALL enrolled classes from API so latest data shows after page reload
+  useEffect(() => {
+    const allClasses = state.classes || [];
+    allClasses.forEach(cls => {
+      if (cls.inviteCode) refreshClassFromAPI(cls);
+    });
+  }, []); // runs once on mount
+
+  // Auto-refresh whenever the student switches to a different class
+  useEffect(() => {
+    if (activeClass) {
+      refreshClassFromAPI(activeClass);
+    }
+  }, [activeClassId]);
+
   const handleSelectClass = (id) => {
     updateState({ activeStudentClassId: id });
   };
 
-  const handleJoinClass = (e) => {
+  const handleJoinClass = async (e) => {
     e.preventDefault();
     const codeVal = joinCode.trim().toLowerCase();
     if (!codeVal) return;
 
-    if (codeVal === 'new123') {
-      const newClass = {
-        id: "cls-303",
-        code: "PY303",
-        name: "PY-303: Advanced Python & AI Paradigms",
-        teacher: "Dr. Grace Hopper",
-        inviteCode: "new123",
-        notes: [
-          { id: "note-4", title: "PyTorch Deep Learning Intro.pdf", size: "4.8 MB", date: "2026-06-22" }
-        ],
-        assignments: [
-          {
-            id: "assign-301",
-            title: "Recurrent Neural Networks Logic",
-            desc: "Simulate a basic feedforward neuron structure and activate outputs using the Sigmoid trigger.",
-            deadline: "2026-07-20 23:00",
-            maxPoints: 100,
-            submissions: []
-          }
-        ]
-      };
+    setJoining(true);
 
-      if (state.classes.some(c => c.id === newClass.id)) {
-        alert("You are already enrolled in this class.");
-        return;
+    try {
+      // Look up the class in Cloudflare KV via Worker API
+      const res = await fetch(`${API_BASE}/api/classes/lookup?inviteCode=${encodeURIComponent(codeVal)}`);
+      const data = await res.json();
+
+      if (data.found && data.class) {
+        const foundClass = data.class;
+
+        if (state.classes.some(c => c.inviteCode === foundClass.inviteCode)) {
+          alert('You are already enrolled in this class.');
+          setJoining(false);
+          return;
+        }
+
+        const updatedClasses = [...state.classes, foundClass];
+        updateState({
+          classes: updatedClasses,
+          activeStudentClassId: foundClass.id
+        });
+        setJoinCode('');
+        alert(`Successfully enrolled in ${foundClass.name}!`);
+      } else {
+        alert('Invalid invite code. Please ask your teacher for the correct code.');
       }
-
-      const updatedClasses = [...state.classes, newClass];
-      updateState({ 
-        classes: updatedClasses,
-        activeStudentClassId: newClass.id
-      });
-      setJoinCode('');
-      alert(`Successfully enrolled in ${newClass.name}!`);
-    } else {
-      alert("Invalid invite code. Try 'new123' to enroll in Grace Hopper's Python class.");
+    } catch (err) {
+      console.error('Join class error:', err);
+      alert('Could not connect to server. Please check your internet and try again.');
     }
+
+    setJoining(false);
   };
 
   const handleSolveAssignment = (assignId) => {
@@ -112,8 +148,12 @@ export function ClassroomStudent() {
             className="bg-slate-950/80 text-xs px-3 py-2 rounded-lg border border-slate-800 focus:border-slate-700 outline-none text-slate-200 w-32 font-mono"
             required
           />
-          <button type="submit" className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition active:scale-95 flex items-center gap-1">
-            <i data-lucide="plus" className="w-3.5 h-3.5"></i> Join Class
+          <button type="submit" disabled=${joining} className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg transition active:scale-95 flex items-center gap-1">
+            <i data-lucide="plus" className="w-3.5 h-3.5"></i> ${joining ? 'Joining...' : 'Join Class'}
+          </button>
+          <button type="button" onClick=${() => activeClass && refreshClassFromAPI(activeClass)} disabled=${refreshing}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-bold text-xs rounded-lg transition active:scale-95 flex items-center gap-1" title="Refresh assignments">
+            <i data-lucide="refresh-cw" className=${`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}></i> ${refreshing ? '' : 'Sync'}
           </button>
         </form>
       </div>

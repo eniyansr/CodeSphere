@@ -2,6 +2,9 @@
 import React, { useState } from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 
+// Central API base — update this if your Worker URL changes
+const API_BASE = 'https://codesphere-api.eniyansr31.workers.dev';
+
 export function TeacherStudents() {
   const { state, updateState, saveTeacherNow } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
@@ -18,7 +21,7 @@ export function TeacherStudents() {
     return student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query);
   });
 
-  const handleRegisterStudent = (e) => {
+  const handleRegisterStudent = async (e) => {
     e.preventDefault();
     if (!studName.trim() || !studEmail.trim()) {
       alert("Please fill in both name and email.");
@@ -33,7 +36,19 @@ export function TeacherStudents() {
     const newStudent = { name, email, code, teacherEmail: currentTeacherEmail };
     const updatedProfiles = [...(state.studentProfiles || []), newStudent];
 
+    // Save locally for teacher's view
     saveTeacherNow(state.classes || [], updatedProfiles, currentTeacherEmail);
+
+    // Also save to central API so students on ANY device can look up this code
+    try {
+      await fetch(`${API_BASE}/api/students/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, code, teacherEmail: currentTeacherEmail }),
+      });
+    } catch (err) {
+      console.warn('Could not sync student to API (offline?), code still works locally:', err);
+    }
 
     setStudName('');
     setStudEmail('');
@@ -50,10 +65,22 @@ export function TeacherStudents() {
     });
   };
 
-  const handleDeleteStudent = (code, name) => {
+  const handleDeleteStudent = async (code, name) => {
     if (confirm(`Are you sure you want to delete the student profile for ${name}? This will revoke their access.`)) {
       const updatedProfiles = (state.studentProfiles || []).filter(s => s.code !== code);
       saveTeacherNow(state.classes || [], updatedProfiles, currentTeacherEmail);
+
+      // Also delete from central API
+      try {
+        await fetch(`${API_BASE}/api/students/delete`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, teacherEmail: currentTeacherEmail }),
+        });
+      } catch (err) {
+        console.warn('Could not delete from API (offline?):', err);
+      }
+
       alert(`Student profile for ${name} removed.`);
     }
   };

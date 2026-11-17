@@ -42,6 +42,28 @@ function MainApp() {
     }
   });
 
+  // Sync Theme (Light / Dark)
+  useEffect(() => {
+    const root = document.documentElement;
+    if (state.theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+  }, [state.theme]);
+
+  // Sync Dynamic Page Title
+  useEffect(() => {
+    if (!state.isLoggedIn) {
+      document.title = 'CodeSphere Pro | Sign in';
+    } else {
+      const tabName = state.activeTab ? state.activeTab.charAt(0).toUpperCase() + state.activeTab.slice(1) : 'Dashboard';
+      document.title = `CodeSphere Pro | ${tabName}`;
+    }
+  }, [state.isLoggedIn, state.activeTab]);
+
   // Sync Accessibility Classrooms
   useEffect(() => {
     const body = document.body;

@@ -2,12 +2,17 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "codesphere",
   "compatibility_date": "2026-06-28",
+
+  // ─── Cloudflare Pages (Frontend) ─────────────────────────────────────────────
+  // Serves the static frontend (index.html + src/) from the root directory
+  "pages_build_output_dir": ".",
+
+  // ─── Observability ───────────────────────────────────────────────────────────
   "observability": {
     "enabled": true
   },
-  "assets": {
-    "directory": "."
-  },
+
+  // ─── Compatibility ───────────────────────────────────────────────────────────
   "compatibility_flags": [
     "nodejs_compat"
   ]

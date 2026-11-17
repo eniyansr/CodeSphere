@@ -1,6 +1,9 @@
 // CodeSphere Pro - Teacher Classroom & Grading Component (React Edition)
-import React, { useState } from 'https://esm.sh/react@18.2.0';
+import React, { useState, useEffect, useCallback } from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
+
+// Central API base
+const API_BASE = 'https://codesphere-api.eniyansr31.workers.dev';
 
 export function ClassroomTeacher() {
   const { state, updateState, saveTeacherNow } = useAppState();
@@ -9,6 +12,44 @@ export function ClassroomTeacher() {
   // Active user details
   const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
   const currentTeacherName = state.googleUser ? state.googleUser.name : 'Teacher';
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshTeacherData = useCallback(async () => {
+    if (!currentTeacherEmail) return;
+    setRefreshing(true);
+    try {
+      // 1. Fetch teacher classes
+      const classRes = await fetch(`${API_BASE}/api/classes/list?teacherEmail=${encodeURIComponent(currentTeacherEmail)}`);
+      const classData = await classRes.json();
+
+      // 2. Fetch teacher registered student profiles
+      const studRes = await fetch(`${API_BASE}/api/students/list?teacherEmail=${encodeURIComponent(currentTeacherEmail)}`);
+      const studData = await studRes.json();
+
+      if (classData.success && studData.success) {
+        const apiClasses = classData.classes || [];
+        const apiStudents = studData.students || [];
+
+        // Filter out existing local state records for this teacher to merge
+        const otherClasses = (state.classes || []).filter(c => c.teacherEmail !== currentTeacherEmail);
+        const mergedClasses = [...otherClasses, ...apiClasses];
+
+        const otherStudents = (state.studentProfiles || []).filter(s => s.teacherEmail !== currentTeacherEmail);
+        const mergedStudents = [...otherStudents, ...apiStudents];
+
+        saveTeacherNow(mergedClasses, mergedStudents, currentTeacherEmail);
+      }
+    } catch (err) {
+      console.warn('Failed to sync teacher data from central API:', err);
+    }
+    setRefreshing(false);
+  }, [currentTeacherEmail, state.classes, state.studentProfiles]);
+
+  // Sync data automatically on mount / currentTeacherEmail load
+  useEffect(() => {
+    refreshTeacherData();
+  }, [currentTeacherEmail]);
 
   // Filter classes & student profiles belonging to this teacher
   const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
@@ -41,7 +82,7 @@ export function ClassroomTeacher() {
     updateState({ activeTeacherClassId: id });
   };
 
-  const handleCreateClass = (e) => {
+  const handleCreateClass = async (e) => {
     e.preventDefault();
     if (!newClassCode.trim() || !newClassName.trim()) return;
 
@@ -63,14 +104,25 @@ export function ClassroomTeacher() {
     saveTeacherNow(updatedClasses, state.studentProfiles || [], currentTeacherEmail);
     updateState({ activeTeacherClassId: newClass.id });
 
+    // Sync to central API so students on any device can join with the invite code
+    try {
+      await fetch(`${API_BASE}/api/classes/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClass),
+      });
+    } catch (err) {
+      console.warn('Could not sync class to API (offline?):', err);
+    }
+
     // Reset inputs & close modal
     setNewClassCode('');
     setNewClassName('');
     setShowClassModal(false);
-    alert(`Classroom ${code} built successfully!`);
+    alert(`Classroom ${code} built successfully! Invite Code: ${newClass.inviteCode}`);
   };
 
-  const handleCreateAssignment = (e) => {
+  const handleCreateAssignment = async (e) => {
     e.preventDefault();
     if (!assTitle.trim() || !assDesc.trim()) return;
 
@@ -103,6 +155,20 @@ export function ClassroomTeacher() {
 
     saveTeacherNow(updatedClasses, state.studentProfiles || [], currentTeacherEmail);
 
+    // Sync updated class (with new assignment) to central API
+    const updatedClass = updatedClasses.find(c => c.id === targetClassId);
+    if (updatedClass && updatedClass.inviteCode) {
+      try {
+        await fetch(`${API_BASE}/api/classes/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedClass),
+        });
+      } catch (err) {
+        console.warn('Could not sync assignment to API (offline?):', err);
+      }
+    }
+
     // Reset inputs & close modal
     setAssTitle('');
     setAssDesc('');
@@ -112,7 +178,7 @@ export function ClassroomTeacher() {
     alert("Coding Assignment published to subject track!");
   };
 
-  const handleCreateStudent = (e) => {
+  const handleCreateStudent = async (e) => {
     e.preventDefault();
     if (!studName.trim() || !studEmail.trim()) {
       alert("Please fill in both name and email.");
@@ -129,6 +195,17 @@ export function ClassroomTeacher() {
 
     saveTeacherNow(state.classes || [], updatedProfiles, currentTeacherEmail);
 
+    // Sync to central API so student can log in from any device
+    try {
+      await fetch(`${API_BASE}/api/students/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, code, teacherEmail: currentTeacherEmail }),
+      });
+    } catch (err) {
+      console.warn('Could not sync student to API (offline?):', err);
+    }
+
     // Reset inputs & close modal
     setStudName('');
     setStudEmail('');
@@ -137,30 +214,50 @@ export function ClassroomTeacher() {
     alert(`Student profile registered successfully!\nName: ${name}\nAccess Code: ${code}\nGive this code to the student to let them log in.`);
   };
 
-  const handleScoreChange = (assId, studentName, val) => {
+  const handleScoreChange = async (assId, studentName, val) => {
     const newScore = parseInt(val) || 0;
 
+    let targetClass = null;
     const updatedClasses = state.classes.map(c => {
-      return {
-        ...c,
-        assignments: c.assignments.map(a => {
-          if (a.id === assId) {
-            return {
-              ...a,
-              submissions: a.submissions.map(s => {
-                if (s.studentName === studentName) {
-                  return { ...s, score: newScore };
-                }
-                return s;
-              })
-            };
-          }
-          return a;
-        })
-      };
+      const containsAssignment = c.assignments.some(a => a.id === assId);
+      if (containsAssignment) {
+        const updatedClass = {
+          ...c,
+          assignments: c.assignments.map(a => {
+            if (a.id === assId) {
+              return {
+                ...a,
+                submissions: a.submissions.map(s => {
+                  if (s.studentName === studentName) {
+                    return { ...s, score: newScore };
+                  }
+                  return s;
+                })
+              };
+            }
+            return a;
+          })
+        };
+        targetClass = updatedClass;
+        return updatedClass;
+      }
+      return c;
     });
 
     saveTeacherNow(updatedClasses, state.studentProfiles || [], currentTeacherEmail);
+
+    // Sync to Cloudflare KV
+    if (targetClass && targetClass.inviteCode) {
+      try {
+        await fetch(`${API_BASE}/api/classes/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(targetClass),
+        });
+      } catch (err) {
+        console.warn('Could not sync grades to API:', err);
+      }
+    }
   };
 
   const handleReplayClick = (assId, studentName) => {
@@ -193,12 +290,22 @@ export function ClassroomTeacher() {
           <p className="text-xs text-slate-400">Add syllabus tracks, create custom tests, review student responses, and grade solutions.</p>
         </div>
 
-        <button 
-          onClick=${() => setShowClassModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10 hover:opacity-95 active:scale-95 transition flex items-center gap-1.5"
-        >
-          <i data-lucide="plus-circle" className="w-4 h-4"></i> Create Class
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick=${refreshTeacherData}
+            disabled=${refreshing}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-bold text-xs rounded-xl transition active:scale-95 flex items-center gap-1.5"
+            title="Refresh student submissions"
+          >
+            <i data-lucide="refresh-cw" className=${`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}></i> ${refreshing ? 'Syncing...' : 'Sync Submissions'}
+          </button>
+          <button 
+            onClick=${() => setShowClassModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/10 hover:opacity-95 active:scale-95 transition flex items-center gap-1.5"
+          >
+            <i data-lucide="plus-circle" className="w-4 h-4"></i> Create Class
+          </button>
+        </div>
       </div>
 
       <!-- Main Layout Grid -->

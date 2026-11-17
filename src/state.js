@@ -504,7 +504,11 @@ export function AppStateProvider({ children }) {
         webcamActive: merged.webcamActive,
         activeLanguage: merged.activeLanguage,
         arenaLanguage: merged.arenaLanguage,
-        activeBattleProblem: merged.activeBattleProblem
+        activeBattleProblem: merged.activeBattleProblem,
+        activeStudentClassId: merged.activeStudentClassId,
+        // Students: persist enrolled classes so they survive page refresh
+        // Teachers: classes are persisted separately via saveTeacherData
+        ...(merged.role === 'student' ? { classes: merged.classes } : {})
       }));
       return merged;
     });

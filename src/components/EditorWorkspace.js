@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0'
 import Editor from 'https://esm.sh/@monaco-editor/react@4.6.0?deps=react@18.2.0,react-dom@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 
+// Central API base
+const API_BASE = 'https://codesphere-api.eniyansr31.workers.dev';
+
 export function EditorWorkspace() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
@@ -257,38 +260,58 @@ export function EditorWorkspace() {
     }
   };
 
-  const submitCode = () => {
+  const submitCode = async () => {
     if (state.activeAssignmentId) {
       const studentName = state.googleUser ? state.googleUser.name : 'Eniyan Rajesh';
       const code = editorRef.current ? editorRef.current.getValue() : '';
       const time = new Date().toISOString().split('T')[0];
 
+      let targetClass = null;
       const updatedClasses = state.classes.map(c => {
-        return {
-          ...c,
-          assignments: c.assignments.map(a => {
-            if (a.id === state.activeAssignmentId) {
-              const otherSubs = a.submissions.filter(s => s.studentName !== studentName);
-              return {
-                ...a,
-                submissions: [
-                  ...otherSubs,
-                  {
-                    studentName,
-                    score: 0,
-                    time,
-                    language: activeLang,
-                    code
-                  }
-                ]
-              };
-            }
-            return a;
-          })
-        };
+        const hasAssignment = c.assignments.some(a => a.id === state.activeAssignmentId);
+        if (hasAssignment) {
+          const updatedClass = {
+            ...c,
+            assignments: c.assignments.map(a => {
+              if (a.id === state.activeAssignmentId) {
+                const otherSubs = a.submissions.filter(s => s.studentName !== studentName);
+                return {
+                  ...a,
+                  submissions: [
+                    ...otherSubs,
+                    {
+                      studentName,
+                      score: 0,
+                      time,
+                      language: activeLang,
+                      code
+                    }
+                  ]
+                };
+              }
+              return a;
+            })
+          };
+          targetClass = updatedClass;
+          return updatedClass;
+        }
+        return c;
       });
 
       updateState({ classes: updatedClasses });
+
+      // Sync the updated class to the central API
+      if (targetClass && targetClass.inviteCode) {
+        try {
+          await fetch(`${API_BASE}/api/classes/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(targetClass),
+          });
+        } catch (err) {
+          console.warn('Could not sync submission to API:', err);
+        }
+      }
     }
 
     setActiveConsoleTab('out');

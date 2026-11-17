@@ -126,6 +126,19 @@ export function Header() {
           <span>${t.contrast}</span>
         </button>
 
+        <!-- Theme Toggle (Light / Dark) -->
+        <button 
+          onClick=${() => updateState({ theme: state.theme === 'light' ? 'dark' : 'light' })}
+          className=${`p-2 rounded-xl border transition-all duration-150 flex items-center gap-1.5 text-sm font-medium ${
+            state.theme === 'light' 
+              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+              : 'bg-slate-900/50 text-slate-300 border-slate-800/40 hover:bg-slate-800 hover:text-white'
+          }`}
+          title="Toggle Light / Dark Mode"
+        >
+          <i data-lucide=${state.theme === 'light' ? 'sun' : 'moon'} className="w-4 h-4"></i>
+        </button>
+
         <!-- Account Details -->
         <div className="flex items-center space-x-3 border-l border-slate-800/80 pl-4">
           <div className="flex items-center space-x-2">

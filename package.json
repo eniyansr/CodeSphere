@@ -1,0 +1,20 @@
+{
+  "name": "codesphere-pro",
+  "version": "1.0.0",
+  "description": "CodeSphere Pro — AI-Powered Compiler & Exam Platform",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler pages dev . --port 3000",
+    "deploy": "wrangler pages deploy . --project-name=codesphere --branch=main --commit-dirty=true",
+    "worker:dev": "wrangler dev --config wrangler.worker.jsonc --port 8787",
+    "worker:deploy": "wrangler deploy --config wrangler.worker.jsonc"
+  },
+  "devDependencies": {
+    "wrangler": "^4.107.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "sharp@0.34.5": true,
+    "workerd@1.20260701.1": true
+  }
+}
