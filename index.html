@@ -1,249 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodeSphere Pro | Sign in</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='4'/%3E%3Cpath d='m8 10 3 3-3 3'/%3E%3Cpath d='M13 16h3'/%3E%3C/svg%3E">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
-            },
-            darkbg: '#080a10',
-            panelbg: 'rgba(15, 23, 42, 0.65)',
-            panelborder: 'rgba(148, 163, 184, 0.08)',
-            accent: {
-              cyan: '#06b6d4',
-              emerald: '#10b981',
-              rose: '#f43f5e',
-              amber: '#f59e0b'
-            }
-          },
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
-          backdropBlur: {
-            xs: '2px',
-          },
-          boxShadow: {
-            'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-            'glass-inset': 'inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)',
-            'glow-cyan': '0 0 15px rgba(6, 182, 212, 0.4)',
-            'glow-indigo': '0 0 15px rgba(99, 102, 241, 0.4)',
-          },
-          animation: {
-            'pulse-fast': 'pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'spin-slow': 'spin 8s linear infinite',
-          }
-        }
-      }
-    }
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeSphere Pro | Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EFFB; --paper:#FFFFFF; --ink:#16213E; --mute:#566180; --line:#D5DEF2;
+  --indigo:#4F46E5; --indigo-d:#3730A3; --teal:#0E9F9A; --teal-d:#0A6F6B;
+  --amber:#F59E0B; --amber-d:#B45309; --coral:#E5484D; --coral-d:#A62A30; --green:#16A34A; --green-d:#0F7A36;
+  --shadow:rgba(22,33,62,.28);
+  --fs:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:var(--fs)}
+body{font-family:"Bricolage Grotesque",system-ui,Segoe UI,sans-serif;color:var(--ink);background:
+  radial-gradient(900px 500px at 12% -10%,#fff 0,transparent 60%),
+  radial-gradient(800px 600px at 100% 100%,#DCE6FB 0,transparent 60%),var(--bg);
+  min-height:100vh;line-height:1.45}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;opacity:.35;mask-image:radial-gradient(circle at 50% 40%,#000 0,transparent 75%);-webkit-mask-image:radial-gradient(circle at 50% 40%,#000 0,transparent 75%)}
+body.hc{--ink:#000;--mute:#222;--line:#8A94B0;--paper:#fff}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--indigo);outline-offset:2px}
+.view{display:none;position:relative;z-index:1}
+.view.on{display:block}
+.mono{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+/* ---------- 3D button ---------- */
+.btn{border:0;cursor:pointer;border-radius:14px;padding:.85rem 1.2rem;font-weight:700;color:#fff;
+  background:linear-gradient(180deg,#6366F1,var(--indigo));
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 5px 0 var(--indigo-d),0 14px 20px -6px var(--shadow);
+  transition:transform .12s,box-shadow .12s;width:100%}
+.btn:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 7px 0 var(--indigo-d),0 18px 24px -6px var(--shadow)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 0 var(--indigo-d),0 4px 8px -4px var(--shadow)}
+.btn.teal{background:linear-gradient(180deg,#14B8B2,var(--teal));box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 5px 0 var(--teal-d),0 14px 20px -6px var(--shadow)}
+.btn.teal:hover{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 7px 0 var(--teal-d),0 18px 24px -6px var(--shadow)}
+.btn.teal:active{box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 1px 0 var(--teal-d),0 4px 8px -4px var(--shadow)}
+.chip{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:#fff;border-radius:12px;padding:.5rem .8rem;font-weight:600;cursor:pointer;
+  box-shadow:0 3px 0 var(--line),0 8px 14px -8px var(--shadow);transition:transform .12s,box-shadow .12s}
+.chip:active{transform:translateY(3px);box-shadow:0 0 0 var(--line)}
 
-  <!-- Lucide Icons -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide/dist/umd/lucide.min.js"></script>
+/* ---------- LOGIN ---------- */
+#login{min-height:100vh}
+.l-wrap{display:grid;grid-template-columns:1.15fr .85fr;min-height:100vh}
+.hero{padding:2.5rem 3rem;display:flex;flex-direction:column;gap:1.4rem}
+.logo{display:flex;align-items:center;gap:.8rem;font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+.logo i{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-style:normal;font-family:"JetBrains Mono",monospace;font-weight:700;
+  background:linear-gradient(145deg,#818CF8,var(--indigo));box-shadow:0 4px 0 var(--indigo-d),0 12px 18px -6px var(--shadow);transform:rotate(-6deg)}
+.logo small{font-size:.7rem;font-weight:700;color:var(--indigo);background:#E4E6FF;border-radius:8px;padding:.1rem .45rem;margin-left:.3rem;vertical-align:middle}
+.hero h1{font-size:clamp(2.6rem,5vw,4.4rem);line-height:.98;letter-spacing:-.04em;font-weight:800;
+  text-shadow:0 1px 0 #fff,0 3px 0 #C9D3EE,0 6px 0 #B8C4E6,0 14px 18px rgba(22,33,62,.2)}
+.hero h1 em{font-style:normal;color:var(--indigo)}
+.hero p.lead{max-width:34rem;color:var(--mute);font-size:1.1rem}
+.scene{perspective:1100px;height:380px;position:relative;margin:.5rem 0}
+.stage{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .2s ease-out;transform:rotateX(var(--rx,8deg)) rotateY(var(--ry,-14deg))}
+.plate{position:absolute;background:#fff;border-radius:18px;border:1px solid var(--line);
+  box-shadow:0 1px 0 #fff inset,0 10px 0 -2px #CBD5EE,0 30px 40px -12px var(--shadow)}
+.p-code{left:2%;top:18px;width:62%;height:250px;transform:translateZ(20px);padding:1rem 1.1rem}
+.p-cam{right:4%;top:0;width:200px;height:150px;transform:translateZ(110px);padding:.7rem}
+.p-board{right:10%;bottom:0;width:230px;transform:translateZ(70px);padding:.9rem 1rem}
+.p-badge{left:8%;bottom:0;transform:translateZ(130px);padding:.7rem 1rem;display:flex;gap:.6rem;align-items:center;font-weight:700;color:var(--green-d);background:#E8F9EE;border-color:#BDEBCB}
+.dots{display:flex;gap:6px;margin-bottom:.7rem}.dots b{width:10px;height:10px;border-radius:50%;background:#FF6B6B}.dots b:nth-child(2){background:#FBBF24}.dots b:nth-child(3){background:#34D399}
+.code{font-family:"JetBrains Mono",monospace;font-size:.78rem;line-height:1.75;color:#334155;white-space:pre}
+.k{color:#7C3AED}.f{color:#0E7490}.s{color:#C2410C}.c{color:#94A3B8}
+.cam{height:100%;border-radius:12px;background:linear-gradient(160deg,#DDE6FB,#C7D5F7);position:relative;display:grid;place-items:center}
+.cam::before{content:"";width:54px;height:54px;border-radius:50%;background:#fff;box-shadow:0 20px 0 -8px #fff}
+.cam span{position:absolute;left:8px;bottom:8px;font-size:.7rem;font-weight:700;background:#fff;border-radius:8px;padding:.15rem .5rem;color:var(--green-d)}
+.row{display:flex;justify-content:space-between;font-size:.85rem;padding:.3rem 0;border-bottom:1px dashed var(--line)}.row:last-child{border:0}
+.feats{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;max-width:36rem}
+.feat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.8rem 1rem;box-shadow:0 4px 0 var(--line),0 14px 20px -12px var(--shadow)}
+.feat b{display:block}.feat span{color:var(--mute);font-size:.9rem}
+.panel{display:grid;place-items:center;padding:2rem;perspective:1400px}
+.card3d{width:100%;max-width:440px;background:linear-gradient(180deg,#fff,#F6F8FE);border:1px solid var(--line);border-radius:26px;padding:2rem;
+  box-shadow:0 1px 0 #fff inset,0 12px 0 -3px #C9D4EE,0 40px 60px -20px var(--shadow);transform-style:preserve-3d;transition:transform .2s ease-out}
+.card3d h2{font-size:1.9rem;letter-spacing:-.03em}
+.card3d .sub{color:var(--mute);margin-bottom:1.2rem}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:#E3EAF8;border-radius:14px;padding:4px;margin-bottom:1.2rem}
+.tabs button{border:0;background:none;padding:.6rem;border-radius:11px;font-weight:700;cursor:pointer;color:var(--mute)}
+.tabs button[aria-selected=true]{background:#fff;color:var(--ink);box-shadow:0 3px 0 #C3CEE8,0 6px 10px -4px var(--shadow)}
+.field{display:block;margin-bottom:.9rem;font-weight:600;font-size:.92rem}
+.field input{display:block;width:100%;margin-top:.35rem;padding:.8rem .9rem;border-radius:12px;border:1px solid var(--line);background:#fff;
+  box-shadow:inset 0 3px 6px rgba(22,33,62,.08);font-weight:500}
+.field input:focus{outline:none;border-color:var(--indigo);box-shadow:inset 0 3px 6px rgba(22,33,62,.08),0 0 0 4px rgba(79,70,229,.18)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.9rem}
+.seg label{cursor:pointer}.seg input{position:absolute;opacity:0}
+.seg span{display:block;text-align:center;padding:.7rem;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;box-shadow:0 4px 0 var(--line);transition:.12s}
+.seg input:checked+span{background:#EEF0FF;border-color:var(--indigo);color:var(--indigo-d);box-shadow:0 4px 0 #B9BEF7}
+.seg input:focus-visible+span{outline:3px solid var(--indigo)}
+.hide{display:none!important}
+.or{display:flex;align-items:center;gap:.8rem;color:var(--mute);font-size:.88rem;margin:1.3rem 0 .8rem}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.otp{display:grid;grid-template-columns:repeat(6,1fr);gap:.45rem;margin-bottom:.9rem}
+.otp input{width:100%;aspect-ratio:1/1.15;text-align:center;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:1.2rem;text-transform:uppercase;border-radius:12px;border:1px solid var(--line);background:#fff;box-shadow:inset 0 3px 6px rgba(22,33,62,.08),0 3px 0 var(--line)}
+.otp input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(14,159,154,.2)}
+.err{color:var(--coral-d);font-size:.88rem;min-height:1.2rem;margin-bottom:.4rem}
+.foot{display:flex;gap:1rem;justify-content:center;margin-top:1.2rem;font-size:.85rem;color:var(--mute)}.foot a{color:inherit}
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+/* ---------- DASHBOARD ---------- */
+.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.side{background:linear-gradient(180deg,#fff,#EEF3FD);border-right:1px solid var(--line);padding:1.4rem 1rem;display:flex;flex-direction:column;gap:1rem;position:sticky;top:0;height:100vh;box-shadow:8px 0 30px -18px var(--shadow)}
+.side .logo{font-size:1.3rem;padding:0 .4rem}
+.online{font-size:.8rem;color:var(--mute);padding:0 .4rem;display:flex;align-items:center;gap:.4rem}.online::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #D3F3DE}
+.nav{display:flex;flex-direction:column;gap:.5rem;margin-top:.6rem}
+.nav button{display:flex;align-items:center;gap:.8rem;border:0;background:none;text-align:left;padding:.75rem .9rem;border-radius:14px;font-weight:600;color:var(--mute);cursor:pointer;transition:transform .12s}
+.nav button:hover{background:#fff;transform:translateX(4px) translateZ(0);box-shadow:0 3px 0 var(--line)}
+.nav button[aria-current=page]{color:#fff;background:linear-gradient(180deg,#6366F1,var(--indigo));box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 5px 0 var(--indigo-d),0 12px 16px -8px var(--shadow);transform:translateY(-2px)}
+.nav svg{width:20px;height:20px;flex:none}
+.lock{margin-top:auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:.9rem;box-shadow:0 4px 0 var(--line)}
+.lock div{display:flex;justify-content:space-between;font-weight:600;font-size:.9rem}.lock em{font-style:normal;color:var(--green-d)}
+.lock i{display:block;height:8px;border-radius:8px;background:linear-gradient(90deg,#34D399,var(--green));margin-top:.6rem;box-shadow:0 2px 0 var(--green-d)}
+.ver{font-size:.75rem;color:var(--mute);text-align:center}
+.main{padding:1.2rem 2rem 3rem;min-width:0}
+.top{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;justify-content:flex-end;margin-bottom:1.6rem}
+.top select{appearance:none;padding:.5rem 1.8rem .5rem .8rem;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:600;box-shadow:0 3px 0 var(--line)}
+.sizes{display:flex;background:#E3EAF8;border-radius:12px;padding:3px}.sizes button{border:0;background:none;padding:.35rem .6rem;border-radius:9px;font-weight:700;cursor:pointer;color:var(--mute)}
+.sizes button[aria-pressed=true]{background:#fff;color:var(--indigo-d);box-shadow:0 2px 0 #C3CEE8}
+.me{display:flex;align-items:center;gap:.6rem;padding-left:.8rem;border-left:1px solid var(--line)}
+.me b{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,#818CF8,var(--indigo));color:#fff;box-shadow:0 3px 0 var(--indigo-d)}
+.me span{display:block;line-height:1.2;font-weight:700}.me small{color:var(--mute);font-weight:500}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.6rem}
+.head h2{font-size:2.1rem;letter-spacing:-.035em;line-height:1.1;text-shadow:0 1px 0 #fff,0 3px 0 #D3DBF0}
+.head p{color:var(--mute)}
+.rating{background:#fff;border:1px solid var(--line);border-radius:16px;padding:.7rem 1.1rem;font-weight:700;box-shadow:0 4px 0 var(--line),0 14px 20px -12px var(--shadow)}
+.rating b{color:var(--indigo)}
+.scene3d{perspective:1200px}
+.tilt{transform-style:preserve-3d;transition:transform .18s ease-out,box-shadow .18s;will-change:transform}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-bottom:1.4rem}
+.stat{--c:var(--indigo);--cd:var(--indigo-d);background:#fff;border:1px solid var(--line);border-radius:20px;padding:1.1rem 1.2rem;position:relative;overflow:hidden;
+  box-shadow:0 1px 0 #fff inset,0 8px 0 -1px var(--cd),0 26px 30px -14px var(--shadow)}
+.stat::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--c);opacity:.12}
+.stat.t{--c:var(--teal);--cd:var(--teal-d)}.stat.a{--c:var(--amber);--cd:var(--amber-d)}.stat.g{--c:var(--green);--cd:var(--green-d)}
+.stat small{color:var(--mute);font-weight:600}
+.stat strong{display:block;font-size:1.7rem;letter-spacing:-.03em;color:var(--cd);transform:translateZ(30px)}
+.stat .ic{position:absolute;right:1rem;top:1rem;width:38px;height:38px;border-radius:12px;background:var(--c);color:#fff;display:grid;place-items:center;transform:translateZ(40px);box-shadow:0 4px 0 var(--cd)}
+.grid2{display:grid;grid-template-columns:1.7fr 1fr;gap:1.1rem;margin-bottom:1.4rem}
+.box{background:#fff;border:1px solid var(--line);border-radius:22px;padding:1.3rem;box-shadow:0 1px 0 #fff inset,0 8px 0 -2px #CBD5EE,0 28px 36px -18px var(--shadow)}
+.box h3{font-size:1.1rem;margin-bottom:1rem;letter-spacing:-.01em}
+.chart{width:100%;height:auto;overflow:visible}
+.chart text{font-size:11px;fill:var(--mute);font-family:inherit}
+.skill{margin-bottom:1.1rem}
+.skill div{display:flex;justify-content:space-between;font-weight:600;font-size:.92rem;margin-bottom:.35rem}
+.bar{height:14px;border-radius:10px;background:#E3EAF8;box-shadow:inset 0 3px 5px rgba(22,33,62,.15);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 55%),var(--c);box-shadow:0 2px 0 rgba(0,0,0,.15);transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}}
+.focus{display:flex;justify-content:space-between;color:var(--mute);font-size:.85rem;border-top:1px dashed var(--line);padding-top:.8rem;margin-top:1.4rem}
+.arena{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.prob{background:#F7F9FE;border:1px solid var(--line);border-radius:18px;padding:1rem;box-shadow:0 5px 0 var(--line),0 18px 22px -14px var(--shadow)}
+.prob header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;transform:translateZ(20px)}
+.tag{font-size:.75rem;font-weight:700;border-radius:8px;padding:.15rem .55rem}
+.tag.easy{background:#DDF5E6;color:var(--green-d)}.tag.medium{background:#FFEFCC;color:var(--amber-d)}.tag.hard{background:#FFE0E1;color:var(--coral-d)}
+.solved{color:var(--green-d);font-weight:700;font-size:.85rem}
+.prob h4{font-size:1.02rem;margin-bottom:.9rem;transform:translateZ(25px)}
+.prob .btn{padding:.6rem;font-size:.9rem;transform:translateZ(15px)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;background:var(--ink);color:#fff;padding:.7rem 1.1rem;border-radius:14px;font-weight:600;transition:.25s;z-index:9;box-shadow:0 14px 30px -8px var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
 
-  <!-- Pyodide is loaded lazily on demand in EditorWorkspace.js when Python code is run -->
-  <!-- RequireJS is not needed since @monaco-editor/react loads Monaco from esm.sh -->
-
-  <style>
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.3);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.15);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.3);
-    }
-
-    body {
-      background-color: #080a10;
-      color: #f8fafc;
-      overflow-x: hidden;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-
-    /* Glassmorphism Styles */
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    }
-
-    .glass-input {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: #f8fafc;
-      transition: all 0.2s ease;
-    }
-    .glass-input:focus {
-      border-color: rgba(99, 102, 241, 0.6);
-      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
-      outline: none;
-    }
-
-    /* Accessibility scale support */
-    .text-scale-sm { font-size: 0.875rem !important; }
-    .text-scale-base { font-size: 1rem !important; }
-    .text-scale-lg { font-size: 1.125rem !important; }
-    .text-scale-xl { font-size: 1.25rem !important; }
-
-    /* High Contrast overrides */
-    .high-contrast {
-      background-color: #000000 !important;
-      color: #ffffff !important;
-    }
-    .high-contrast .glass-panel {
-      background: #000000 !important;
-      border: 2px solid #ffffff !important;
-    }
-    .high-contrast button {
-      border: 2px solid #ffffff !important;
-      color: #ffffff !important;
-    }
-
-    /* Dot Grid Textures */
-    .dot-grid-bg {
-      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.25px, transparent 1.25px);
-      background-size: 24px 24px;
-    }
-    .light .dot-grid-bg,
-    html.light .dot-grid-bg {
-      background-image: radial-gradient(rgba(15, 23, 42, 0.08) 1.25px, transparent 1.25px);
-      background-size: 24px 24px;
-    }
-
-    /* Light Mode Overrides */
-    html.light body {
-      background-color: #f8fafc !important;
-      color: #0f172a !important;
-    }
-    html.light .glass-panel {
-      background: rgba(255, 255, 255, 0.85) !important;
-      border: 1px solid rgba(226, 232, 240, 0.9) !important;
-      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08) !important;
-      color: #0f172a !important;
-    }
-    html.light .glass-input {
-      background: rgba(248, 250, 252, 0.95) !important;
-      border: 1px solid rgba(203, 213, 225, 0.8) !important;
-      color: #0f172a !important;
-    }
-    html.light .glass-input:focus {
-      border-color: #6366f1 !important;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
-    }
-
-    /* Scanline for Proctoring preview */
-    .proctor-scanline {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.9), transparent);
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.8);
-      animation: scanline 2.6s ease-in-out infinite;
-    }
-    @keyframes scanline {
-      0% { top: 0%; opacity: 0.2; }
-      50% { top: 96%; opacity: 0.9; }
-      100% { top: 0%; opacity: 0.2; }
-    }
-
-    /* Radar animation for live proctoring dashboard */
-    .radar-pulse {
-      position: relative;
-    }
-    .radar-pulse::after {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      border: 2px solid #f43f5e;
-      border-radius: 50%;
-      animation: radar-grow 2s linear infinite;
-      opacity: 0;
-    }
-
-    @keyframes radar-grow {
-      0% {
-        transform: scale(1);
-        opacity: 0.8;
-      }
-      100% {
-        transform: scale(2.2);
-        opacity: 0;
-      }
-    }
-  </style>
+@media (max-width:1100px){.stats,.arena{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media (max-width:860px){
+  .l-wrap{grid-template-columns:1fr}.hero{padding:1.5rem}.scene{display:none}.panel{order:-1;padding:1rem}
+  .shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}.nav{flex-direction:row;flex-wrap:wrap}.lock,.ver{display:none}
+  .main{padding:1rem}.top{justify-content:flex-start}
+}
+@media (max-width:520px){.stats,.arena{grid-template-columns:1fr}.feats{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.stage,.tilt,.card3d{transform:none!important}}
+</style>
 </head>
-<body class="min-h-screen flex flex-col font-sans transition-colors duration-200">
+<body>
 
-  <!-- Branded Loading Overlay with Logo Pulse & Skeleton Shimmer -->
-  <div id="app-loading" class="fixed inset-0 bg-[#080a10] z-50 flex flex-col items-center justify-center p-6 space-y-6 select-none">
-    <div class="relative flex items-center justify-center">
-      <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-0.5 shadow-2xl shadow-cyan-500/30 animate-pulse">
-        <div class="w-full h-full bg-[#0d1117] rounded-[14px] flex items-center justify-center">
-          <svg class="w-9 h-9 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 17 10 11 4 5"></polyline>
-            <line x1="12" y1="19" x2="20" y2="19"></line>
-          </svg>
-        </div>
-      </div>
-      <div class="absolute -inset-4 rounded-full bg-cyan-500/20 blur-xl -z-10 animate-pulse"></div>
+<!-- ======================= LOGIN ======================= -->
+<main id="login" class="view on">
+ <div class="l-wrap">
+  <section class="hero">
+   <div class="logo"><i>&gt;_</i><span>CodeSphere<small>PRO</small></span></div>
+   <h1>Learn. Code.<br><em>Compete.</em></h1>
+   <p class="lead">Write code, take proctored exams and earn certificates in one place. Your teacher sees results the moment you submit.</p>
+
+   <div class="scene" id="scene" aria-hidden="true">
+    <div class="stage" id="stage">
+     <div class="plate p-code">
+      <div class="dots"><b></b><b></b><b></b></div>
+<div class="code"><span class="k">def</span> <span class="f">two_sum</span>(nums, target):
+    seen = {}
+    <span class="k">for</span> i, n <span class="k">in</span> <span class="f">enumerate</span>(nums):
+        <span class="k">if</span> target - n <span class="k">in</span> seen:
+            <span class="k">return</span> [seen[target - n], i]
+        seen[n] = i
+
+<span class="c"># 5 of 5 tests passed</span></div>
+     </div>
+     <div class="plate p-cam"><div class="cam"><span>Proctoring on</span></div></div>
+     <div class="plate p-board">
+      <b>Battle Arena</b>
+      <div class="row"><span>1. Meera</span><b>980</b></div>
+      <div class="row"><span>2. Arjun</span><b>915</b></div>
+      <div class="row"><span>3. Divya</span><b>890</b></div>
+     </div>
+     <div class="plate p-badge">&#10003; All tests passed</div>
+    </div>
+   </div>
+
+   <div class="feats">
+    <div class="feat"><b>AI proctoring</b><span>Flags tab switches and extra faces during exams</span></div>
+    <div class="feat"><b>Instant results</b><span>Tests are graded as soon as you submit</span></div>
+    <div class="feat"><b>Classrooms</b><span>Assignments and exams in one class space</span></div>
+    <div class="feat"><b>Certificates</b><span>Each one has an ID anyone can verify</span></div>
+   </div>
+  </section>
+
+  <section class="panel">
+   <div class="card3d" id="card">
+    <h2>Welcome</h2>
+    <p class="sub">Log in or create your account.</p>
+    <div class="tabs" role="tablist">
+     <button role="tab" aria-selected="true" data-tab="in">Log in</button>
+     <button role="tab" aria-selected="false" data-tab="up">Sign up</button>
     </div>
 
-    <div class="text-center space-y-1.5">
-      <div class="text-2xl font-black tracking-tight text-white flex items-center justify-center gap-2">
-        CodeSphere <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-400 font-extrabold text-xs uppercase px-2 py-0.5 rounded-md bg-cyan-400/10 border border-cyan-400/20 tracking-widest">Pro</span>
-      </div>
-      <p class="text-xs text-slate-400 tracking-wide font-medium">Initializing secure compiler, proctoring & dashboard...</p>
+    <form id="f-in" data-go>
+     <label class="field">Email<input type="email" required autocomplete="email" placeholder="you@college.edu"></label>
+     <label class="field">Password<input type="password" required autocomplete="current-password" placeholder="Enter your password"></label>
+     <button class="btn" type="submit">Log in</button>
+    </form>
+
+    <form id="f-up" class="hide" data-go>
+     <div class="seg" role="radiogroup" aria-label="Account type">
+      <label><input type="radio" name="role" value="Student" checked><span>I’m a student</span></label>
+      <label><input type="radio" name="role" value="Teacher"><span>I’m a teacher</span></label>
+     </div>
+     <label class="field">Full name<input type="text" required autocomplete="name"></label>
+     <label class="field">Email<input type="email" required autocomplete="email"></label>
+     <label class="field">Password<input type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+     <button class="btn" type="submit">Create account</button>
+    </form>
+
+    <div class="or">Taking an exam?</div>
+    <form id="f-code">
+     <div class="otp" id="otp" aria-label="Exam access code">
+      <input maxlength="1" aria-label="Character 1"><input maxlength="1" aria-label="Character 2"><input maxlength="1" aria-label="Character 3"><input maxlength="1" aria-label="Character 4"><input maxlength="1" aria-label="Character 5"><input maxlength="1" aria-label="Character 6">
+     </div>
+     <p class="err" id="err" role="alert"></p>
+     <button class="btn teal" type="submit">Join exam with code</button>
+    </form>
+    <div class="foot"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Help</a></div>
+   </div>
+  </section>
+ </div>
+</main>
+
+<!-- ======================= DASHBOARD ======================= -->
+<div id="dash" class="view">
+ <div class="shell">
+  <aside class="side">
+   <div class="logo"><i>&gt;_</i><span>CodeSphere<small>PRO</small></span></div>
+   <div class="online">System connected</div>
+   <nav class="nav" aria-label="Main">
+    <button aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>Dashboard</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h6a3 3 0 013 3v11a2 2 0 00-2-2H4zM20 5h-6a3 3 0 00-3 3v11a2 2 0 012-2h7z"/></svg>Classroom</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Examination</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>Practice arena</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Coding battle</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="5"/><path d="M9 14l-2 7 5-3 5 3-2-7"/></svg>Certificates</button>
+    <button data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg>Notepad</button>
+   </nav>
+   <div class="lock"><div><span>Secure lockdown</span><em>Verified</em></div><i></i></div>
+   <div class="ver">CodeSphere Pro v2.4.0</div>
+  </aside>
+
+  <section class="main">
+   <div class="top">
+    <button class="chip" data-soon>Notepad</button>
+    <select aria-label="Language"><option>English</option><option>தமிழ்</option><option>हिन्दी</option></select>
+    <div class="sizes" role="group" aria-label="Text size">
+     <button data-fs="14" aria-pressed="false">SM</button><button data-fs="16" aria-pressed="true">BASE</button><button data-fs="18" aria-pressed="false">LG</button><button data-fs="20" aria-pressed="false">XL</button>
     </div>
+    <button class="chip" id="hc" aria-pressed="false">High contrast</button>
+    <div class="me"><b>GC</b><div><span>GitHub Contributor</span><small>Student</small></div></div>
+    <button class="chip" id="out">Log out</button>
+   </div>
 
-    <!-- Skeleton Shimmer Progress Bar -->
-    <div class="w-56 h-1.5 rounded-full bg-slate-800/80 overflow-hidden relative border border-slate-700/50">
-      <div class="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-500 rounded-full animate-pulse" style="width: 75%;"></div>
+   <div class="head">
+    <div><h2>Welcome back, GitHub Contributor!</h2><p>Track your progress, check your certificates and continue your assessments.</p></div>
+    <div class="rating">Arena rating: <b class="mono">915 AP (#2)</b></div>
+   </div>
+
+   <div class="stats scene3d">
+    <div class="stat tilt" data-tilt><span class="ic">&#10003;</span><small>Assignments solved</small><strong class="mono">1 / 3 tasks</strong></div>
+    <div class="stat t tilt" data-tilt><span class="ic">&#9678;</span><small>Coding accuracy</small><strong class="mono">89% average</strong></div>
+    <div class="stat a tilt" data-tilt><span class="ic">&#9733;</span><small>Earned certificates</small><strong class="mono">2 certificates</strong></div>
+    <div class="stat g tilt" data-tilt><span class="ic">&#9919;</span><small>Security status</small><strong class="mono">Verified safe</strong></div>
+   </div>
+
+   <div class="grid2 scene3d">
+    <div class="box tilt" data-tilt="3">
+     <h3>Performance trend</h3>
+     <svg class="chart" viewBox="0 0 680 290" role="img" aria-label="Score rose from 75 on June 5 to a peak of 95 on June 20, then 90 on June 23">
+      <defs>
+       <linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4F46E5" stop-opacity=".35"/><stop offset="1" stop-color="#4F46E5" stop-opacity="0"/></linearGradient>
+       <filter id="sh" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="6" flood-color="#3730A3" flood-opacity=".35"/></filter>
+      </defs>
+      <g stroke="#D5DEF2"><line x1="40" x2="640" y1="30" y2="30"/><line x1="40" x2="640" y1="80" y2="80"/><line x1="40" x2="640" y1="130" y2="130"/><line x1="40" x2="640" y1="180" y2="180"/><line x1="40" x2="640" y1="230" y2="230"/></g>
+      <g text-anchor="end"><text x="30" y="34">95</text><text x="30" y="84">90</text><text x="30" y="134">85</text><text x="30" y="184">80</text><text x="30" y="234">75</text></g>
+      <path d="M40 230 C110 205,150 190,201 180 S300 150,362 130 S470 30,524 30 S590 70,620 80 L620 230 L40 230Z" fill="url(#ar)"/>
+      <path d="M40 230 C110 205,150 190,201 180 S300 150,362 130 S470 30,524 30 S590 70,620 80" fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round" filter="url(#sh)"/>
+      <g fill="#fff" stroke="#4F46E5" stroke-width="4"><circle cx="40" cy="230" r="7"/><circle cx="201" cy="180" r="7"/><circle cx="362" cy="130" r="7"/><circle cx="524" cy="30" r="9"/><circle cx="620" cy="80" r="7"/></g>
+      <g text-anchor="middle"><text x="40" y="258">June 5</text><text x="201" y="258">June 10</text><text x="362" y="258">June 15</text><text x="524" y="258">June 20</text><text x="620" y="258">June 23</text></g>
+     </svg>
     </div>
-  </div>
+    <div class="box tilt" data-tilt="3">
+     <h3>Skill levels</h3>
+     <div class="skill" style="--c:#0E9F9A"><div><span>JavaScript core algorithms</span><span>92% Advanced</span></div><div class="bar"><i style="width:92%"></i></div></div>
+     <div class="skill" style="--c:#4F46E5"><div><span>Python scripting and recursion</span><span>85% Proficient</span></div><div class="bar"><i style="width:85%"></i></div></div>
+     <div class="skill" style="--c:#16A34A"><div><span>SQL Server schema queries</span><span>78% Intermediate</span></div><div class="bar"><i style="width:78%"></i></div></div>
+     <div class="skill" style="--c:#F59E0B"><div><span>C++ low-level pointers</span><span>60% Developing</span></div><div class="bar"><i style="width:60%"></i></div></div>
+     <div class="focus"><span>Strongest: JavaScript</span><span>Work on: C++ memory</span></div>
+    </div>
+   </div>
 
-  <!-- Primary Application Wrapper -->
-  <div id="app-container" class="flex-grow flex flex-col min-h-screen hidden">
-    <!-- Will be populated by JS Modules -->
-  </div>
+   <div class="box">
+    <h3>Practice arena</h3>
+    <div class="arena scene3d">
+     <article class="prob tilt" data-tilt="8"><header><span class="tag easy">Easy</span><span class="solved">&#10003; Solved</span></header><h4>Two Sum</h4><button class="btn" data-soon>Open challenge</button></article>
+     <article class="prob tilt" data-tilt="8"><header><span class="tag easy">Easy</span></header><h4>Reverse Linked List</h4><button class="btn" data-soon>Open challenge</button></article>
+     <article class="prob tilt" data-tilt="8"><header><span class="tag hard">Hard</span></header><h4>Median of Two Sorted Arrays</h4><button class="btn" data-soon>Open challenge</button></article>
+     <article class="prob tilt" data-tilt="8"><header><span class="tag medium">Medium</span></header><h4>Longest Palindromic Substring</h4><button class="btn" data-soon>Open challenge</button></article>
+    </div>
+   </div>
+  </section>
+ </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
-  <!-- Main ES6 Entry Script -->
-  <script type="module" src="./src/app.js"></script>
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+function show(id){$$('.view').forEach(v=>v.classList.toggle('on',v.id===id));document.title=id==='dash'?'CodeSphere Pro | Dashboard':'CodeSphere Pro | Sign in';scrollTo(0,0)}
+
+/* tabs */
+$$('[data-tab]').forEach(b=>b.onclick=()=>{
+  $$('[data-tab]').forEach(x=>x.setAttribute('aria-selected',x===b));
+  $('#f-in').classList.toggle('hide',b.dataset.tab!=='in');
+  $('#f-up').classList.toggle('hide',b.dataset.tab!=='up');
+});
+
+/* demo sign-in: replace with your real auth call, then show('dash') */
+$$('[data-go]').forEach(f=>f.addEventListener('submit',e=>{e.preventDefault();show('dash')}));
+$('#out').onclick=()=>show('login');
+$$('[data-soon]').forEach(b=>b.addEventListener('click',()=>toast('This section opens in the full app')));
+
+/* access code boxes */
+const boxes=$$('#otp input');
+boxes.forEach((b,i)=>{
+  b.addEventListener('input',()=>{b.value=b.value.replace(/[^a-z0-9]/gi,'').toUpperCase();if(b.value&&boxes[i+1])boxes[i+1].focus()});
+  b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&boxes[i-1])boxes[i-1].focus()});
+  b.addEventListener('paste',e=>{e.preventDefault();const t=(e.clipboardData.getData('text')||'').replace(/[^a-z0-9]/gi,'').toUpperCase();boxes.forEach((x,j)=>x.value=t[j]||'');(boxes[Math.min(t.length,5)]).focus()});
+});
+$('#f-code').addEventListener('submit',e=>{
+  e.preventDefault();const code=boxes.map(b=>b.value).join('');
+  if(code.length<6){$('#err').textContent='Enter all 6 characters of your exam code.';return}
+  $('#err').textContent='';show('dash');toast('Code '+code+' accepted (demo)');
+});
+
+/* 3D: hero stage follows pointer */
+const stage=$('#stage'),scene=$('#scene');
+if(!calm){
+  scene.addEventListener('pointermove',e=>{const r=scene.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    stage.style.setProperty('--ry',(x*28-8)+'deg');stage.style.setProperty('--rx',(8-y*20)+'deg')});
+  scene.addEventListener('pointerleave',()=>{stage.style.removeProperty('--ry');stage.style.removeProperty('--rx')});
+  /* login card tilts gently */
+  const card=$('#card');
+  card.parentElement.addEventListener('pointermove',e=>{const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`rotateY(${x*5}deg) rotateX(${-y*5}deg)`});
+  card.parentElement.addEventListener('pointerleave',()=>card.style.transform='');
+  /* dashboard cards tilt */
+  $$('[data-tilt]').forEach(el=>{
+    const max=+el.dataset.tilt||10;
+    el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();
+      const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      el.style.transform=`rotateY(${x*max}deg) rotateX(${-y*max}deg) translateY(-4px)`});
+    el.addEventListener('pointerleave',()=>el.style.transform='');
+  });
+}
+
+/* accessibility controls */
+$$('[data-fs]').forEach(b=>b.onclick=()=>{
+  document.documentElement.style.setProperty('--fs',b.dataset.fs+'px');
+  $$('[data-fs]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+});
+$('#hc').onclick=e=>{const on=document.body.classList.toggle('hc');e.currentTarget.setAttribute('aria-pressed',on)};
+</script>
 </body>
 </html>
