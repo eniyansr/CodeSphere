@@ -1,4 +1,4 @@
-// CodeSphere Pro - Teacher Live Proctoring Panel (React Edition)
+// CodeSphere Pro - 3D Tactile Live AI Proctoring Supervision Center (React Edition)
 import React from 'https://esm.sh/react@18.2.0';
 import { html, useAppState, TRANSLATIONS } from '../state.js';
 
@@ -14,154 +14,113 @@ export function ProctoringCenter() {
   ];
 
   const handleWarn = (studentName) => {
-    alert(`Manual warning flag sent to ${studentName}. User screen is displaying alert pop-ups.`);
-    
-    const manualLog = {
+    alert(`Manual warning flag transmitted to candidate ${studentName}.`);
+    const log = {
       timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
       user: studentName,
-      event: "Manual Warn",
-      details: "Invigilator issued manual warning for suspicious head posturing.",
+      event: "Invigilator Warning",
+      details: "Manual warning issued for gaze divergence or background voices.",
       severity: 'warning'
     };
-
     updateState({
       warningsCount: studentName === "Eniyan Rajesh" ? (state.warningsCount || 0) + 1 : (state.warningsCount || 0),
-      securityLogs: [manualLog, ...(state.securityLogs || [])]
+      securityLogs: [log, ...(state.securityLogs || [])]
     });
   };
 
   const handleVoid = (studentName) => {
-    if (confirm(`CAUTION: Forcefully terminate and invalidate exam session for candidate ${studentName}?`)) {
-      
-      const manualLog = {
+    if (confirm(`Terminate and void session for candidate ${studentName}?`)) {
+      const log = {
         timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
         user: studentName,
         event: "Session Voided",
-        details: "Invigilator voided session candidate for multiple policy violations.",
-        severity: 'warning'
+        details: "Invigilator invalidated session due to recurring violations.",
+        severity: 'critical'
       };
-
-      if (studentName === "Eniyan Rajesh") {
-        updateState({
-          examStatus: null,
-          isLockdownActive: false,
-          securityLogs: [manualLog, ...(state.securityLogs || [])]
-        });
-      } else {
-        updateState({
-          securityLogs: [manualLog, ...(state.securityLogs || [])]
-        });
-      }
-      alert(`${studentName}'s secure session is terminated. Candidate logged out.`);
+      updateState({
+        securityLogs: [log, ...(state.securityLogs || [])]
+      });
+      alert(`Candidate ${studentName}'s exam session was voided.`);
     }
   };
 
   return html`
-    <div className="p-6 space-y-6 flex-grow overflow-y-auto">
+    <div className="flex-grow p-4 md:p-8 bg-[#F4F7FE] overflow-y-auto">
       
-      <!-- Top header with heartbeat -->
-      <div className="flex justify-between items-center border-b border-slate-800/40 pb-5">
+      <!-- Top Title Bar -->
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <i data-lucide="scan-eye" className="text-accent-rose w-6 h-6 animate-pulse"></i>
-            Live AI Proctoring Center
-          </h2>
-          <p className="text-xs text-slate-400">Real-time supervision of active exam candidates. Monitoring eyes, tab switches, and objects.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-[#16213E] tracking-tight">AI Proctoring Center</h2>
+          <p className="text-sm font-semibold text-[#566180] mt-0.5">Real-time candidate telemetry, automated gaze tracking, and remote exam invigilation</p>
         </div>
 
-        <div className="flex items-center space-x-2 bg-slate-900/40 border border-slate-800 px-3 py-1.5 rounded-xl">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-accent-rose radar-pulse"></span>
-          <span className="text-xs font-mono font-bold text-accent-rose uppercase">SUPERVISING ACTIVE FEED</span>
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-[#D5DEF2]"
+             style=${{ boxShadow: '0 3px 0 #D5DEF2' }}>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs font-mono font-bold text-emerald-700">SUPERVISION ACTIVE</span>
         </div>
       </div>
 
-      <!-- Proctoring Grid -->
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Candidate Feeds Grid -->
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         ${mockActiveStudents.map(student => {
-          let statusColor = "bg-emerald-500/10 text-accent-emerald border-emerald-500/20";
-          let statusText = "SECURE";
-          if (student.status === 'warning') {
-            statusColor = "bg-amber-500/10 text-accent-amber border-amber-500/20";
-            statusText = "WARN SIGN";
-          } else if (student.status === 'flagged') {
-            statusColor = "bg-rose-500/10 text-accent-rose border-rose-500/20";
-            statusText = "FLAGGED";
-          }
+          const isFlagged = student.status === 'flagged';
+          const isWarn = student.status === 'warning';
 
           return html`
-            <div key=${student.id} className="glass-panel p-4 rounded-2xl flex flex-col justify-between space-y-4 hover:border-slate-800/80 transition relative overflow-hidden">
-              
-              <!-- Indicator status bar -->
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-bold text-slate-300 truncate max-w-[120px]">${student.name}</span>
-                <span className="px-2 py-0.5 rounded text-[9px] font-bold font-mono border ${statusColor}">${statusText}</span>
-              </div>
+            <div
+              key=${student.id}
+              className="bg-white rounded-3xl p-5 border border-[#D5DEF2] flex flex-col justify-between"
+              style=${{ boxShadow: '0 1px 0 #fff inset, 0 8px 0 -2px #CBD5EE, 0 24px 32px -16px rgba(22, 33, 62, 0.2)' }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-extrabold text-[#16213E]">${student.name}</span>
+                  <span className=${`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                    isFlagged
+                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                      : isWarn
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  }`}>
+                    ${isFlagged ? 'FLAGGED' : isWarn ? 'WARNING' : 'SECURE'}
+                  </span>
+                </div>
 
-              <!-- Webcam grid card mock -->
-              <div className="aspect-video w-full rounded-xl bg-slate-950 border border-slate-900/60 relative overflow-hidden flex flex-col items-center justify-center text-slate-600">
-                <i data-lucide="video" className="w-8 h-8 opacity-20"></i>
-                <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase tracking-widest animate-pulse">Webcam Stream ${student.id}</div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60"></div>
-                <div className="absolute bottom-2 left-2 flex items-center space-x-1.5 text-[8px] font-mono font-bold bg-slate-900/90 text-slate-300 px-1.5 py-0.5 rounded border border-slate-800">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full ${student.warnings > 2 ? 'bg-accent-rose' : student.warnings > 0 ? 'bg-accent-amber' : 'bg-accent-emerald'}"></span>
-                  <span>Face Verified</span>
+                <!-- Simulated Camera Tile -->
+                <div className="w-full aspect-video rounded-2xl bg-gradient-to-br from-[#DDE6FB] to-[#C7D5F7] relative flex items-center justify-center mb-4 overflow-hidden border border-[#D5DEF2]">
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center font-bold text-sm text-indigo-700 shadow-md">
+                    ${student.avatar}
+                  </div>
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-lg bg-white/90 text-[10px] font-mono font-bold text-[#16213E]">
+                    Cam 0${student.id.slice(-1)}
+                  </div>
+                </div>
+
+                <div className="text-xs font-mono text-[#566180] mb-4 space-y-1">
+                  <div>Warnings: <strong className=${student.warnings > 0 ? 'text-rose-600' : 'text-emerald-600'}>${student.warnings}</strong></div>
+                  <div>Gaze Vector: <strong className="text-[#16213E]">Centered</strong></div>
                 </div>
               </div>
 
-              <!-- Statistics -->
-              <div className="space-y-1 bg-slate-950/60 p-2.5 rounded-xl border border-slate-900 font-mono text-[10px]">
-                <div className="flex justify-between text-slate-400">
-                  <span>Tab Switches:</span>
-                  <span className="font-bold text-slate-300">${student.warnings} attempts</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Eye Tracking:</span>
-                  <span className="font-bold text-slate-300">${student.warnings > 1 ? 'Suspicious' : 'Normal'}</span>
-                </div>
-              </div>
-
-              <!-- Command buttons -->
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
-                <button 
+              <!-- Action buttons -->
+              <div className="flex items-center gap-2 pt-3 border-t border-[#D5DEF2]">
+                <button
                   onClick=${() => handleWarn(student.name)}
-                  className="flex-grow py-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold text-[10px] rounded-lg transition active:scale-95 flex items-center justify-center gap-1"
+                  className="chip text-[11px] flex-1 text-amber-700 border-amber-200 hover:bg-amber-50"
                 >
-                  <i data-lucide="alert-triangle" className="w-3 h-3 text-accent-amber"></i> Warn
+                  Warn
                 </button>
-                <button 
+                <button
                   onClick=${() => handleVoid(student.name)}
-                  className="flex-grow py-1.5 bg-accent-rose/10 hover:bg-accent-rose/20 text-accent-rose border border-accent-rose/20 font-bold text-[10px] rounded-lg transition active:scale-95 flex items-center justify-center gap-1"
+                  className="chip text-[11px] flex-1 text-rose-600 border-rose-200 hover:bg-rose-50"
                 >
-                  <i data-lucide="shield-alert" className="w-3 h-3 text-accent-rose"></i> Void Exam
+                  Void
                 </button>
               </div>
-
             </div>
           `;
         })}
-      </div>
-
-      <!-- Live logs feed -->
-      <div className="glass-panel p-5 rounded-3xl space-y-4">
-        <h4 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-          <i data-lucide="scroll" className="w-4 h-4 text-indigo-400"></i> Active Security Intrusion Audit
-        </h4>
-
-        <div className="max-h-60 overflow-y-auto space-y-2" id="proctor-live-audit-logs">
-          ${(state.securityLogs || []).map(log => html`
-            <div key=${log.timestamp + '-' + log.user} className="bg-slate-950/30 p-2.5 rounded-xl border border-slate-900/60 flex items-center justify-between text-xs hover:border-slate-800 transition">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full ${log.severity === 'warning' ? 'bg-accent-rose' : 'bg-accent-cyan'} shadow-sm"></div>
-                <div className="font-mono text-slate-500 text-[10px]">${log.timestamp}</div>
-                <div className="font-bold text-slate-300 text-[11px]">${log.user}</div>
-                <div className="text-slate-400">${log.details}</div>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[8px] font-bold font-mono uppercase bg-slate-900 border border-slate-800 ${log.severity === 'warning' ? 'text-accent-rose border-rose-950' : 'text-accent-cyan border-cyan-950'}">
-                ${log.event}
-              </span>
-            </div>
-          `)}
-        </div>
       </div>
 
     </div>

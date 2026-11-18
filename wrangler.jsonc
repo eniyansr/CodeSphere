@@ -4,7 +4,6 @@
   "compatibility_date": "2026-06-28",
 
   // ─── Cloudflare Pages (Frontend) ─────────────────────────────────────────────
-  // Serves the static frontend (index.html + src/) from the root directory
   "pages_build_output_dir": ".",
 
   // ─── Observability ───────────────────────────────────────────────────────────
@@ -15,5 +14,14 @@
   // ─── Compatibility ───────────────────────────────────────────────────────────
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+
+  // ─── Cloudflare D1 Database Binding ──────────────────────────────────────────
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "codesphere-db",
+      "database_id": "codesphere-d1-db"
+    }
   ]
 }

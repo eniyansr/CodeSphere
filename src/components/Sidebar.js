@@ -1,5 +1,4 @@
 // CodeSphere Pro - 3D Tactile Sidebar Menu Component (React Edition)
-// Exact match to 3D light-theme sidebar: extruded active 3D key, hover slide, and smooth tab navigation.
 import React from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 
@@ -10,13 +9,14 @@ export function Sidebar() {
   // Menu items configured with icons matching the 3D tactile UI
   const menuConfig = {
     student: [
-      { id: 'dashboard',    label: 'Dashboard',      icon: 'layout-grid' },
-      { id: 'classroom',    label: 'Classroom',      icon: 'book-open' },
-      { id: 'exams',        label: 'Examination',    icon: 'check-square' },
-      { id: 'practice',     label: 'Practice arena', icon: 'code-2' },
-      { id: 'battle',       label: 'Coding battle',  icon: 'zap' },
-      { id: 'certificates', label: 'Certificates',   icon: 'award' },
-      { id: 'notepad',      label: 'Notepad',        icon: 'pencil' }
+      { id: 'dashboard',    label: 'Dashboard',       icon: 'layout-grid' },
+      { id: 'classroom',    label: 'Classroom',       icon: 'book-open' },
+      { id: 'exams',        label: 'Examination',     icon: 'check-square' },
+      { id: 'practice',     label: 'Practice arena',  icon: 'code-2' },
+      { id: 'battle',       label: 'Coding battle',   icon: 'zap' },
+      { id: 'certificates', label: 'Certificates',    icon: 'award' },
+      { id: 'security',     label: 'Security center', icon: 'shield-check' },
+      { id: 'notepad',      label: 'Notepad',         icon: 'pencil' }
     ],
     teacher: [
       { id: 'dashboard',    label: 'Dashboard',        icon: 'layout-grid' },
@@ -24,10 +24,12 @@ export function Sidebar() {
       { id: 'students',     label: 'Students List',    icon: 'users' },
       { id: 'proctoring',   label: 'Live Proctoring',  icon: 'shield-alert' },
       { id: 'exams',        label: 'Examination',      icon: 'check-square' },
+      { id: 'security',     label: 'Security center',  icon: 'shield-check' },
       { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
     ],
     admin: [
       { id: 'admin',        label: 'Admin Control',    icon: 'shield-check' },
+      { id: 'security',     label: 'Security center',  icon: 'shield-check' },
       { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
     ]
   };
@@ -107,7 +109,7 @@ export function Sidebar() {
         </div>
 
         <div className="text-[11px] text-center text-[#566180] font-mono tracking-wide">
-          CodeSphere Pro v2.4.0
+          CodeSphere Pro v2.4.0 · E2EE
         </div>
       </div>
 

@@ -15,6 +15,7 @@ import { BattleArena } from './components/BattleArena.js';
 import { Certificates } from './components/Certificates.js';
 import { Replay } from './components/Replay.js';
 import { AdminPanel } from './components/AdminPanel.js';
+import { SecuritySettings } from './components/SecuritySettings.js';
 import { useSecurityGuards } from './components/SecurityGuard.js';
 import { Auth } from './components/Auth.js';
 import { Notepad } from './components/Notepad.js';
@@ -106,6 +107,8 @@ function MainApp() {
     viewComponent = html`<${TeacherStudents} />`;
   } else if (tab === 'replay_viewer') {
     viewComponent = html`<${Replay} />`;
+  } else if (tab === 'security') {
+    viewComponent = html`<${SecuritySettings} />`;
   }
 
   return html`

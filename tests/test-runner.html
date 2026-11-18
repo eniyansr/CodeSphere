@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CodeSphere Pro — Cryptographic Engine Test Runner</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0b0f19; color: #f8fafc; padding: 2rem; }
+    .card { background: #162032; border: 1px solid #1e293b; border-radius: 12px; padding: 1.5rem; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; color: #818cf8; }
+    .test { padding: 0.75rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; font-family: monospace; font-size: 0.85rem; }
+    .pass { color: #34d399; font-weight: bold; }
+    .fail { color: #f87171; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>CodeSphere Pro — E2EE Test Suite</h1>
+    <div id="results">Running tests...</div>
+  </div>
+
+  <script type="module">
+    import {
+      generateDEK,
+      exportDEK,
+      importDEK,
+      encryptAESGCM,
+      decryptAESGCM,
+      generateSigningKeyPair,
+      signData,
+      verifySignature,
+      generateEncryptionKeyPair,
+      wrapKeyForRecipient,
+      unwrapKeyForRecipient,
+      deriveVaultKey,
+      getRandomBytes,
+      stringToBuffer,
+      bufferToString
+    } from '../src/crypto/crypto-core.js';
+
+    import {
+      createEncryptedEnvelope,
+      decryptEncryptedEnvelope
+    } from '../src/crypto/envelope-encryption.js';
+
+    import {
+      createNewUserVault,
+      unlockUserVault
+    } from '../src/crypto/key-vault.js';
+
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+
+    function logTest(name, passed, detail = '') {
+      const el = document.createElement('div');
+      el.className = 'test';
+      el.innerHTML = `<span>${name}</span><span class="${passed ? 'pass' : 'fail'}">${passed ? 'PASSED' : 'FAILED: ' + detail}</span>`;
+      resultsDiv.appendChild(el);
+    }
+
+    async function runSuite() {
+      // Test 1: AES-256-GCM Roundtrip
+      try {
+        const dek = await generateDEK();
+        const msg = "Sensitive student submission code: def solve(): return 42";
+        const { ciphertext, nonce } = await encryptAESGCM(dek, stringToBuffer(msg), 'record-1');
+        const decryptedBuf = await decryptAESGCM(dek, ciphertext, nonce, 'record-1');
+        const decryptedStr = bufferToString(decryptedBuf);
+        logTest('1. AES-256-GCM Encrypt & Decrypt Roundtrip', decryptedStr === msg);
+      } catch (e) {
+        logTest('1. AES-256-GCM Encrypt & Decrypt Roundtrip', false, e.message);
+      }
+
+      // Test 2: ECDSA P-256 Digital Signature
+      try {
+        const pair = await generateSigningKeyPair();
+        const data = stringToBuffer("CodeSphere Certified Certificate #CSP-909");
+        const sig = await signData(pair.privateKey, data);
+        const valid = await verifySignature(pair.publicKey, sig, data);
+        logTest('2. ECDSA P-256 Signature Generation & Verification', valid === true);
+      } catch (e) {
+        logTest('2. ECDSA P-256 Signature Generation & Verification', false, e.message);
+      }
+
+      // Test 3: RFC 9180 DEK Wrapping & Unwrapping via ECDH
+      try {
+        const recipientPair = await generateEncryptionKeyPair();
+        const dek = await generateDEK();
+        const rawDEK = await exportDEK(dek);
+
+        const wrapped = await wrapKeyForRecipient(recipientPair.publicKey, rawDEK);
+        const unwrappedDEK = await unwrapKeyForRecipient(
+          recipientPair.privateKey,
+          wrapped.ephemeralPublicKey,
+          wrapped.wrappedKey,
+          wrapped.wrapNonce
+        );
+        const rawUnwrapped = await exportDEK(unwrappedDEK);
+        const match = new Uint8Array(rawDEK).every((val, i) => val === new Uint8Array(rawUnwrapped)[i]);
+        logTest('3. ECDH Ephemeral Key Wrapping & DEK Recovery', match === true);
+      } catch (e) {
+        logTest('3. ECDH Ephemeral Key Wrapping & DEK Recovery', false, e.message);
+      }
+
+      // Test 4: Full Multi-Recipient Envelope Encryption
+      try {
+        const senderSigningPair = await generateSigningKeyPair();
+        const teacherEncPair = await generateEncryptionKeyPair();
+        const studentEncPair = await generateEncryptionKeyPair();
+
+        const envelope = await createEncryptedEnvelope({
+          recordId: 'assignment-101',
+          ownerId: 'teacher-1',
+          contentType: 'assignment',
+          plaintext: { instructions: 'Build a Red-Black Tree in C++' },
+          senderSigningKeyPair: senderSigningPair,
+          recipientPublicKeys: [
+            { recipientId: 'teacher-1', publicKey: teacherEncPair.publicKey },
+            { recipientId: 'student-2', publicKey: studentEncPair.publicKey }
+          ]
+        });
+
+        // Student decrypts
+        const studentDecrypted = await decryptEncryptedEnvelope({
+          envelope,
+          recipientUserId: 'student-2',
+          recipientEncryptionPrivateKey: studentEncPair.privateKey
+        });
+
+        logTest('4. Multi-Recipient Envelope Encryption & Decryption', studentDecrypted.instructions === 'Build a Red-Black Tree in C++');
+      } catch (e) {
+        logTest('4. Multi-Recipient Envelope Encryption & Decryption', false, e.message);
+      }
+
+      // Test 5: Tamper Detection (Ciphertext alteration must fail)
+      try {
+        const dek = await generateDEK();
+        const { ciphertext, nonce } = await encryptAESGCM(dek, stringToBuffer("Immutable exam question"), 'aad');
+        
+        // Corrupt first byte of base64
+        const corrupted = ciphertext.slice(0, 4) === 'AAAA' ? 'BBBB' + ciphertext.slice(4) : 'AAAA' + ciphertext.slice(4);
+        let threw = false;
+        try {
+          await decryptAESGCM(dek, corrupted, nonce, 'aad');
+        } catch {
+          threw = true;
+        }
+        logTest('5. Cryptographic Tamper Detection (GCM Tag Check)', threw === true);
+      } catch (e) {
+        logTest('5. Cryptographic Tamper Detection', false, e.message);
+      }
+
+      // Test 6: Zero-Knowledge Key Vault Creation & Passphrase Unlock
+      try {
+        const vaultRes = await createNewUserVault('CorrectHorseBatteryStaple123!');
+        const unlocked = await unlockUserVault('CorrectHorseBatteryStaple123!', vaultRes.vaultData);
+        logTest('6. User Key Vault Derivation & Passphrase Unlock', unlocked.signingPair !== null);
+      } catch (e) {
+        logTest('6. User Key Vault Derivation & Passphrase Unlock', false, e.message);
+      }
+
+      // Test 7: Wrong Passphrase Vault Rejection
+      try {
+        const vaultRes = await createNewUserVault('CorrectHorseBatteryStaple123!');
+        let failed = false;
+        try {
+          await unlockUserVault('WrongPassword456!', vaultRes.vaultData);
+        } catch {
+          failed = true;
+        }
+        logTest('7. Wrong Passphrase Vault Rejection', failed === true);
+      } catch (e) {
+        logTest('7. Wrong Passphrase Vault Rejection', false, e.message);
+      }
+    }
+
+    runSuite();
+  </script>
+</body>
+</html>

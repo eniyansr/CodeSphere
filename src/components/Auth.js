@@ -1,7 +1,7 @@
-// CodeSphere Pro - 3D Tactile Authentication Component (React Edition)
-// Extruded 3D typography, mouse-tracking 3D floating stage, chunky tactile keys, and real auth integration.
+// CodeSphere Pro - 3D Tactile Authentication Component with E2EE Vault (React Edition)
 import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
 import { html, useAppState, loadTeacherData, findStudentByCode } from '../state.js';
+import { registerUser, loginUser } from '../services/auth-service.js';
 
 const ACCOUNTS_KEY = 'codesphere_accounts';
 const userDataKey  = (email) => `codesphere_user_${email.replace(/[^a-z0-9]/gi, '_')}`;
@@ -50,17 +50,6 @@ function saveAccount(email, profile, role) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(all));
 }
 
-export function getUserData(email) {
-  try { return JSON.parse(localStorage.getItem(userDataKey(email)) || '{}'); }
-  catch { return {}; }
-}
-
-export function saveUserData(email, data) {
-  if (!email) return;
-  const existing = getUserData(email);
-  localStorage.setItem(userDataKey(email), JSON.stringify({ ...existing, ...data }));
-}
-
 function buildProfile(name, email) {
   const cleanName = (name || '').trim();
   const initials = cleanName
@@ -80,6 +69,7 @@ export function Auth() {
   const [codeBoxes, setCodeBoxes]       = useState(['', '', '', '', '', '']);
   const [error, setError]               = useState('');
   const [loading, setLoading]           = useState(false);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(null); // recoveryKey string when registered
 
   const boxRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
   const sceneRef = useRef(null);
@@ -144,60 +134,91 @@ export function Auth() {
     };
   }, []);
 
-  // Complete Login and transition to real Dashboard
-  const completeLogin = (role, emailVal, accountVal) => {
+  const completeLogin = (role, emailVal, accountVal, userId = null) => {
     const email = (emailVal || formEmail).toLowerCase().trim() || 'student@college.edu';
     const acct  = accountVal || buildProfile(formName || email.split('@')[0], email);
     saveAccount(email, acct, role);
 
-    const userData    = getUserData(email);
     const teacherData = role === 'teacher'
       ? loadTeacherData(email)
       : { classes: [], studentProfiles: globalState.studentProfiles || [] };
 
     updateState({
       isLoggedIn:      true,
-      googleUser:      { name: acct.name, email },
+      googleUser:      { id: userId || `usr-${Date.now()}`, name: acct.name, email },
       role,
       activeTab:       'dashboard',
-      notepadContent:  userData.notepadContent !== undefined ? userData.notepadContent : '',
       classes:         teacherData.classes,
       studentProfiles: role === 'teacher' ? teacherData.studentProfiles : (globalState.studentProfiles || []),
     });
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      const email = formEmail.trim().toLowerCase() || 'github.contributor@codesphere.edu';
-      const allAccounts = getSavedAccounts();
-      const existing = allAccounts[email];
+    try {
+      const email = formEmail.trim().toLowerCase() || 'sarah.jenkins@university.edu';
+      const password = formPassword || 'Password123!';
 
-      if (existing) {
-        completeLogin(existing.role || 'student', email, existing);
-      } else {
-        const profile = buildProfile(email.split('@')[0], email);
-        completeLogin('student', email, profile);
+      // Real auth with Cloudflare Worker
+      try {
+        const res = await loginUser({ email, password });
+        if (res.user) {
+          completeLogin(res.user.role, res.user.email, { name: res.user.name }, res.user.id);
+          setLoading(false);
+          return;
+        }
+      } catch (backendErr) {
+        // Fallback for local demo accounts
+        const allAccounts = getSavedAccounts();
+        const existing = allAccounts[email];
+        if (existing) {
+          completeLogin(existing.role || 'student', email, existing);
+          setLoading(false);
+          return;
+        }
+        throw backendErr;
       }
+    } catch (err) {
+      setError(err.message || 'Login failed. Please verify your credentials.');
+    } finally {
       setLoading(false);
-    }, 300);
+    }
   };
 
-  const handleSignupSubmit = (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      const name  = formName.trim() || 'New User';
+    try {
+      const name = formName.trim() || 'New User';
       const email = formEmail.trim().toLowerCase() || 'user@codesphere.edu';
-      const profile = buildProfile(name, email);
-      completeLogin(signupRole, email, profile);
+      const password = formPassword || 'Password123!';
+
+      const regRes = await registerUser({
+        name,
+        email,
+        password,
+        role: signupRole,
+        vaultPassphrase: password
+      });
+
+      // Show recovery key modal
+      setShowRecoveryModal(regRes.recoveryKey);
+    } catch (err) {
+      setError(err.message || 'Registration failed.');
       setLoading(false);
-    }, 300);
+    }
+  };
+
+  const handleAcknowledgeRecovery = () => {
+    const email = formEmail.trim().toLowerCase() || 'user@codesphere.edu';
+    const profile = buildProfile(formName, email);
+    setShowRecoveryModal(null);
+    completeLogin(signupRole, email, profile);
   };
 
   // OTP 6-box access code
@@ -240,7 +261,6 @@ export function Auth() {
     }
 
     setLoading(true);
-    // Check local student or demo codes
     const localFound = findStudentByCode(code) || findStudentByCode(`STUD-${code}`);
     if (localFound) {
       const email = localFound.email || `${localFound.name.toLowerCase().replace(/\s+/g, '')}@codesphere.edu`;
@@ -248,219 +268,292 @@ export function Auth() {
       return;
     }
 
-    // Default demo student login for access codes
-    setTimeout(() => {
-      completeLogin('student', `candidate.${code.toLowerCase()}@codesphere.edu`, {
-        name: `Exam Candidate (${code})`,
-        avatar: 'EC',
-        color: '#0E9F9A'
-      });
-      setLoading(false);
-    }, 400);
+    // Default student entry
+    completeLogin('student', `candidate-${code.toLowerCase()}@exam.edu`, { name: `Candidate ${code}` });
+    setLoading(false);
   };
 
   return html`
-    <main id="login" class="view on select-none">
-      <div class="l-wrap">
-        
-        <!-- ================= HERO LEFT PANEL ================= -->
-        <section class="hero">
-          
-          <!-- Logo -->
-          <div class="logo">
-            <i>&gt;_</i>
-            <span>CodeSphere<small>PRO</small></span>
-          </div>
+    <div className="l-wrap">
+      
+      <!-- Left Hero Column with 3D Scene -->
+      <section className="hero">
+        <div className="logo select-none">
+          <i>{ }</i>
+          <span>CodeSphere <small>E2EE PRO</small></span>
+        </div>
 
-          <!-- Extruded 3D Headline -->
-          <h1>
-            Learn. Code.<br/>
-            <em>Compete.</em>
+        <div>
+          <h1 className="select-none">
+            Learn. Code. <em>Compete.</em>
           </h1>
-
-          <p class="lead">
-            Write code, take proctored exams and earn certificates in one place. Your teacher sees results the moment you submit.
+          <p className="lead mt-2">
+            Zero-knowledge encrypted educational coding environment with in-browser compiler sandbox, live AI proctoring, and verifiable certificates.
           </p>
+        </div>
 
-          <!-- 3D Perspective Floating Scene -->
-          <div class="scene" id="scene" ref=${sceneRef} aria-hidden="true">
-            <div class="stage" id="stage" ref=${stageRef}>
-              
-              <!-- Code Plate -->
-              <div class="plate p-code">
-                <div class="dots"><b></b><b></b><b></b></div>
-                <div class="code"><span class="k">def</span> <span class="f">two_sum</span>(nums, target):
-    seen = {}
-    <span class="k">for</span> i, n <span class="k">in</span> <span class="f">enumerate</span>(nums):
-        <span class="k">if</span> target - n <span class="k">in</span> seen:
-            <span class="k">return</span> [seen[target - n], i]
-        seen[n] = i
-
-<span class="c"># 5 of 5 tests passed</span></div>
+        <!-- 3D Interactive Floating Stage -->
+        <div className="scene select-none" ref=${sceneRef}>
+          <div className="stage" ref=${stageRef}>
+            
+            <div className="plate p-code">
+              <div className="dots"><b></b><b></b><b></b></div>
+              <div className="code">
+                <span className="k">async def</span> <span className="f">encrypt_vault</span>(passphrase):<br/>
+                ${'    '}salt = crypto.<span className="f">getRandomValues</span>(<span className="s">16</span>)<br/>
+                ${'    '}key = <span className="k">await</span> hkdf.<span className="f">deriveKey</span>(passphrase, salt)<br/>
+                ${'    '}cipher = <span className="k">await</span> aes_gcm.<span className="f">seal</span>(code, key)<br/>
+                ${'    '}<span className="k">return</span> { <span className="s">"status"</span>: <span className="s">"Zero-Knowledge Verified"</span> }
               </div>
-
-              <!-- Camera Proctoring Plate -->
-              <div class="plate p-cam">
-                <div class="cam">
-                  <span>Proctoring on</span>
-                </div>
-              </div>
-
-              <!-- Battle Arena Leaderboard Plate -->
-              <div class="plate p-board">
-                <b>Battle Arena</b>
-                <div class="row"><span>1. Meera</span><b>980</b></div>
-                <div class="row"><span>2. Arjun</span><b>915</b></div>
-                <div class="row"><span>3. Divya</span><b>890</b></div>
-              </div>
-
-              <!-- All Tests Passed Badge Plate -->
-              <div class="plate p-badge">
-                &#10003; All tests passed
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Feature items below scene -->
-          <div class="feats">
-            <div class="feat"><b>AI proctoring</b><span>Flags tab switches and extra faces during exams</span></div>
-            <div class="feat"><b>Instant results</b><span>Tests are graded as soon as you submit</span></div>
-            <div class="feat"><b>Classrooms</b><span>Assignments and exams in one class space</span></div>
-            <div class="feat"><b>Certificates</b><span>Each one has an ID anyone can verify</span></div>
-          </div>
-
-        </section>
-
-        <!-- ================= 3D LOGIN CARD PANEL ================= -->
-        <section class="panel">
-          <div class="card3d" id="card" ref=${cardRef}>
-            <h2>Welcome</h2>
-            <p class="sub">Log in or create your account.</p>
-
-            <!-- Tabs: [ Log in | Sign up ] -->
-            <div class="tabs" role="tablist">
-              <button role="tab" aria-selected=${activeTab === 'in'} onClick=${() => { setActiveTab('in'); setError(''); }}>
-                Log in
-              </button>
-              <button role="tab" aria-selected=${activeTab === 'up'} onClick=${() => { setActiveTab('up'); setError(''); }}>
-                Sign up
-              </button>
             </div>
 
-            <!-- TAB 1: LOG IN FORM -->
+            <div className="plate p-cam">
+              <div className="cam"><span>LIVE PROCTOR</span></div>
+            </div>
+
+            <div className="plate p-board">
+              <div className="row"><span>1. Alex C.</span><b className="mono">980 AP</b></div>
+              <div className="row"><span>2. Eniyan R.</span><b className="mono">915 AP</b></div>
+              <div className="row"><span>3. Aisha B.</span><b className="mono">870 AP</b></div>
+            </div>
+
+            <div className="plate p-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <span>AES-256-GCM Secure</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div className="feats select-none">
+          <div className="feat">
+            <b>Zero-Knowledge Backend</b>
+            <span>User code and notes are encrypted locally before transmission.</span>
+          </div>
+          <div className="feat">
+            <b>Pyodide WebAssembly</b>
+            <span>100% client-side Python execution without cloud leaks.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Login Card -->
+      <section className="panel">
+        <div className="w-full max-w-[420px]">
+          
+          <div
+            ref=${cardRef}
+            className="bg-white rounded-3xl p-8 border border-[#D5DEF2] relative transition-transform duration-100 ease-out"
+            style=${{
+              boxShadow: '0 1px 0 #fff inset, 0 10px 0 -2px #CBD5EE, 0 32px 48px -16px rgba(22, 33, 62, 0.35)'
+            }}
+          >
+            
+            <!-- Tab Switcher -->
+            <div className="grid grid-cols-2 p-1.5 bg-[#EEF3FD] rounded-2xl border border-[#D5DEF2] mb-6">
+              <button
+                type="button"
+                onClick=${() => { setActiveTab('in'); setError(''); }}
+                className=${`py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'in'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-[#566180] hover:text-[#16213E]'
+                }`}
+              >
+                Log In
+              </button>
+              <button
+                type="button"
+                onClick=${() => { setActiveTab('up'); setError(''); }}
+                className=${`py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'up'
+                    ? 'bg-white text-indigo-700 shadow-sm'
+                    : 'text-[#566180] hover:text-[#16213E]'
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            ${error && html`
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-center gap-2">
+                <i data-lucide="alert-circle" className="w-4 h-4 text-rose-500"></i>
+                <span>${error}</span>
+              </div>
+            `}
+
+            <!-- Log In Form -->
             ${activeTab === 'in' && html`
-              <form onSubmit=${handleLoginSubmit} id="f-in">
-                <label class="field">
-                  Email
-                  <input type="email"
-                         required
-                         value=${formEmail}
-                         onChange=${(e) => setFormEmail(e.target.value)}
-                         autocomplete="email"
-                         placeholder="you@college.edu" />
-                </label>
-                <label class="field">
-                  Password
-                  <input type="password"
-                         required
-                         value=${formPassword}
-                         onChange=${(e) => setFormPassword(e.target.value)}
-                         autocomplete="current-password"
-                         placeholder="Enter your password" />
-                </label>
-                <button class="btn mt-2" type="submit" disabled=${loading}>
-                  ${loading ? 'Logging in...' : 'Log in'}
-                </button>
-              </form>
-            `}
-
-            <!-- TAB 2: SIGN UP FORM -->
-            ${activeTab === 'up' && html`
-              <form onSubmit=${handleSignupSubmit} id="f-up">
-                
-                <!-- Student / Teacher Segmented Control -->
-                <div class="seg" role="radiogroup" aria-label="Account type">
-                  <label>
-                    <input type="radio" name="role" value="student" checked=${signupRole === 'student'} onChange=${() => setSignupRole('student')} />
-                    <span>I’m a student</span>
-                  </label>
-                  <label>
-                    <input type="radio" name="role" value="teacher" checked=${signupRole === 'teacher'} onChange=${() => setSignupRole('teacher')} />
-                    <span>I’m a teacher</span>
-                  </label>
+              <form onSubmit=${handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#16213E] mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="sarah.jenkins@university.edu"
+                    value=${formEmail}
+                    onInput=${(e) => setFormEmail(e.target.value)}
+                    className="w-full bg-[#F0F4FD] border border-[#D5DEF2] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#16213E] focus:outline-none focus:border-indigo-600"
+                  />
                 </div>
 
-                <label class="field">
-                  Full name
-                  <input type="text"
-                         required
-                         value=${formName}
-                         onChange=${(e) => setFormName(e.target.value)}
-                         autocomplete="name"
-                         placeholder="Alex Chen" />
-                </label>
-                <label class="field">
-                  Email
-                  <input type="email"
-                         required
-                         value=${formEmail}
-                         onChange=${(e) => setFormEmail(e.target.value)}
-                         autocomplete="email"
-                         placeholder="you@college.edu" />
-                </label>
-                <label class="field">
-                  Password
-                  <input type="password"
-                         required
-                         minlength="6"
-                         value=${formPassword}
-                         onChange=${(e) => setFormPassword(e.target.value)}
-                         autocomplete="new-password"
-                         placeholder="At least 6 characters" />
-                </label>
-                <button class="btn mt-2" type="submit" disabled=${loading}>
-                  ${loading ? 'Creating account...' : 'Create account'}
+                <div>
+                  <label className="block text-xs font-bold text-[#16213E] mb-1">Vault Passphrase</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••••••"
+                    value=${formPassword}
+                    onInput=${(e) => setFormPassword(e.target.value)}
+                    className="w-full bg-[#F0F4FD] border border-[#D5DEF2] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#16213E] focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled=${loading}
+                  className="btn text-xs py-3 mt-2 flex items-center justify-center gap-2"
+                >
+                  <span>${loading ? 'Unlocking Vault...' : 'Log In to CodeSphere'}</span>
                 </button>
               </form>
             `}
 
-            <!-- Exam Access Code Section -->
-            <div class="or">Taking an exam?</div>
-            <form onSubmit=${handleCodeSubmit} id="f-code">
-              
-              <!-- 6 Separate OTP Boxes -->
-              <div class="otp" id="otp" aria-label="Exam access code">
-                ${[0, 1, 2, 3, 4, 5].map(idx => html`
-                  <input key=${idx}
-                         ref=${boxRefs[idx]}
-                         type="text"
-                         maxlength="1"
-                         value=${codeBoxes[idx]}
-                         onInput=${(e) => handleBoxInput(idx, e.target.value)}
-                         onKeyDown=${(e) => handleBoxKeyDown(idx, e)}
-                         onPaste=${handleBoxPaste}
-                         aria-label=${`Character ${idx + 1}`} />
-                `)}
+            <!-- Sign Up Form -->
+            ${activeTab === 'up' && html`
+              <form onSubmit=${handleSignupSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-2 p-1 bg-[#EEF3FD] rounded-xl border border-[#D5DEF2]">
+                  <button
+                    type="button"
+                    onClick=${() => setSignupRole('student')}
+                    className=${`py-1.5 rounded-lg text-xs font-bold ${signupRole === 'student' ? 'bg-indigo-600 text-white shadow-sm' : 'text-[#566180]'}`}
+                  >
+                    Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick=${() => setSignupRole('teacher')}
+                    className=${`py-1.5 rounded-lg text-xs font-bold ${signupRole === 'teacher' ? 'bg-indigo-600 text-white shadow-sm' : 'text-[#566180]'}`}
+                  >
+                    Teacher
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#16213E] mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Dr. Sarah Jenkins"
+                    value=${formName}
+                    onInput=${(e) => setFormName(e.target.value)}
+                    className="w-full bg-[#F0F4FD] border border-[#D5DEF2] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#16213E] focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#16213E] mb-1">University Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="sarah@university.edu"
+                    value=${formEmail}
+                    onInput=${(e) => setFormEmail(e.target.value)}
+                    className="w-full bg-[#F0F4FD] border border-[#D5DEF2] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#16213E] focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#16213E] mb-1">Vault Passphrase</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Min 8 characters"
+                    value=${formPassword}
+                    onInput=${(e) => setFormPassword(e.target.value)}
+                    className="w-full bg-[#F0F4FD] border border-[#D5DEF2] rounded-xl px-3.5 py-2.5 text-xs font-bold text-[#16213E] focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled=${loading}
+                  className="btn teal text-xs py-3 mt-2 flex items-center justify-center gap-2"
+                >
+                  <span>${loading ? 'Deriving E2EE Keys...' : 'Create Encrypted Account'}</span>
+                </button>
+              </form>
+            `}
+
+            <!-- 6-Digit Exam Access OTP -->
+            <div className="mt-6 pt-6 border-t border-[#D5DEF2]">
+              <div className="text-center mb-3">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#566180]">
+                  Direct Examination Access
+                </span>
               </div>
 
-              ${error && html`<p class="err" id="err" role="alert">${error}</p>`}
+              <form onSubmit=${handleCodeSubmit} className="space-y-3">
+                <div className="flex justify-between gap-1.5" onPaste=${handleBoxPaste}>
+                  ${codeBoxes.map((box, idx) => html`
+                    <input
+                      key=${idx}
+                      ref=${boxRefs[idx]}
+                      type="text"
+                      maxLength="1"
+                      value=${box}
+                      onInput=${(e) => handleBoxInput(idx, e.target.value)}
+                      onKeyDown=${(e) => handleBoxKeyDown(idx, e)}
+                      className="w-11 h-12 text-center text-base font-mono font-extrabold text-[#16213E] bg-[#F0F4FD] border border-[#CBD5EE] rounded-xl focus:border-indigo-600 focus:outline-none"
+                    />
+                  `)}
+                </div>
 
-              <button class="btn teal" type="submit" disabled=${loading}>
-                Join exam with code
-              </button>
-            </form>
-
-            <div class="foot">
-              <a href="#" onClick=${(e) => { e.preventDefault(); alert("CodeSphere Privacy Guarantee: Camera and window monitoring runs locally inside the browser sandbox during formal exams with your explicit consent."); }}>Privacy</a>
-              <a href="#" onClick=${(e) => { e.preventDefault(); alert("Academic Terms: All submitted code is evaluated in an isolated memory namespace with strict CPU execution limits."); }}>Terms</a>
-              <a href="#" onClick=${(e) => { e.preventDefault(); alert("Help & FAQ: To take an exam, obtain a 6-character access token from your teacher and ensure webcam permissions are enabled."); }}>Help</a>
+                <button
+                  type="submit"
+                  disabled=${loading}
+                  className="chip w-full justify-center text-xs py-2.5 font-bold hover:bg-slate-50"
+                >
+                  Enter Exam Room
+                </button>
+              </form>
             </div>
 
           </div>
-        </section>
 
-      </div>
-    </main>
+        </div>
+      </section>
+
+      <!-- Recovery Key Modal (shown upon new account generation) -->
+      ${showRecoveryModal && html`
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-[#D5DEF2]"
+               style=${{ boxShadow: '0 1px 0 #fff inset, 0 10px 0 -2px #CBD5EE, 0 32px 48px -16px rgba(22, 33, 62, 0.35)' }}>
+            
+            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold text-xl mb-4"
+                 style=${{ boxShadow: '0 3px 0 #B45309' }}>
+              <i data-lucide="key" className="w-6 h-6"></i>
+            </div>
+
+            <h3 className="text-lg font-extrabold text-[#16213E] mb-1">Save Your E2EE Recovery Key</h3>
+            <p className="text-xs text-[#566180] mb-4 leading-relaxed">
+              Because CodeSphere uses true zero-knowledge end-to-end encryption, the server cannot recover lost passwords. Write down or copy this mnemonic recovery key safely:
+            </p>
+
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-mono font-bold text-amber-900 select-all break-all mb-6">
+              ${showRecoveryModal}
+            </div>
+
+            <button
+              onClick=${handleAcknowledgeRecovery}
+              className="btn text-xs py-3"
+            >
+              I Have Saved My Recovery Key
+            </button>
+          </div>
+        </div>
+      `}
+
+    </div>
   `;
 }

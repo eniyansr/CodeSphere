@@ -9,6 +9,13 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "codesphere-db",
+      "database_id": "codesphere-d1-db"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "CODESPHERE_KV",
