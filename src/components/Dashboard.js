@@ -1,144 +1,61 @@
-// CodeSphere Pro - Unified Dashboard Component (React Edition)
+// CodeSphere Pro - 3D Tactile Dashboard Component (React Edition)
+// Interactive 3D tilt cards, SVG performance trend, animated skill bars, and one-click challenge launcher.
 import React, { useEffect, useRef } from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 
 export function Dashboard() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
-  
-  const chartCanvasRef = useRef(null);
-  const chartInstanceRef = useRef(null);
 
-  // Dynamic Chart Initialization
+  // Mouse tilt effect for 3D cards
   useEffect(() => {
-    if (!chartCanvasRef.current) return;
+    const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if (calm) return;
 
-    // Destroy old chart
-    if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-      chartInstanceRef.current = null;
-    }
+    const cards = document.querySelectorAll('[data-tilt]');
+    const cleanups = [];
 
-    const ctx = chartCanvasRef.current.getContext('2d');
-
-    if (state.role === 'teacher') {
-      const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
-      if (!currentTeacherEmail) return;
-      const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
-
-      const langCounts = {};
-      teacherClasses.forEach(c => {
-        c.assignments.forEach(a => {
-          if (a.submissions) {
-            a.submissions.forEach(s => {
-              const lang = s.language ? s.language.toLowerCase() : 'javascript';
-              langCounts[lang] = (langCounts[lang] || 0) + 1;
-            });
-          }
-        });
+    cards.forEach(el => {
+      const max = +el.dataset.tilt || 8;
+      const onMove = (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        el.style.transform = `rotateY(${x * max}deg) rotateX(${-y * max}deg) translateY(-4px)`;
+      };
+      const onLeave = () => {
+        el.style.transform = '';
+      };
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerleave', onLeave);
+      cleanups.push(() => {
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerleave', onLeave);
       });
+    });
 
-      const labels = Object.keys(langCounts).length > 0 
-        ? Object.keys(langCounts).map(l => l.toUpperCase()) 
-        : ['No Submissions'];
-      const data = Object.values(langCounts).length > 0 
-        ? Object.values(langCounts) 
-        : [1];
-      const bgColors = Object.keys(langCounts).length > 0 
-        ? Object.keys(langCounts).map(l => {
-            if (l === 'javascript') return 'rgba(99, 102, 241, 0.65)';
-            if (l === 'python') return 'rgba(6, 182, 212, 0.65)';
-            if (l === 'cpp') return 'rgba(244, 63, 94, 0.65)';
-            return 'rgba(16, 185, 129, 0.65)';
-          }) 
-        : ['rgba(148, 163, 184, 0.15)'];
+    return () => cleanups.forEach(c => c());
+  });
 
-      chartInstanceRef.current = new window.Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: bgColors,
-            borderColor: 'rgba(255, 255, 255, 0.05)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
-            }
-          }
-        }
-      });
-    } else {
-      // Student chart
-      chartInstanceRef.current = new window.Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['June 5', 'June 10', 'June 15', 'June 20', 'June 23'],
-          datasets: [{
-            label: 'Grade Score Accuracy (%)',
-            data: [75, 80, 85, 95, 90],
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.08)',
-            fill: true,
-            tension: 0.35,
-            borderWidth: 2.5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
-            },
-            x: {
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10 } }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false
-            }
-          }
-        }
-      });
-    }
-
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-        chartInstanceRef.current = null;
-      }
-    };
-  }, [state.role, state.classes, state.googleUser, state.language]);
-
-  const handleSolvePuzzle = (pName) => {
+  // Handle Practice problem challenge launch
+  const handleLaunchChallenge = (pName) => {
     const templates = {
-      "Two Sum": `function twoSum(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const diff = target - nums[i];\n        if (map.has(diff)) return [map.get(diff), i];\n        map.set(nums[i], i);\n    }\n    return [];\n}`,
-      "Reverse Linked List": `// Reversing linked list in python\ndef reverseList(head):\n    prev = None\n    curr = head\n    while curr:\n        nxt = curr.next\n        curr.next = prev\n        prev = curr\n        curr = nxt\n    return prev`,
-      "Median of Two Sorted Arrays": `// Hard challenge template`,
-      "Longest Palindromic Substring": `// Longest Palindromic Substring template`
+      "Two Sum": `// CodeSphere - Two Sum Challenge\nfunction twoSum(nums, target) {\n    const seen = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (seen.has(complement)) {\n            return [seen.get(complement), i];\n        }\n        seen.set(nums[i], i);\n    }\n    return [];\n}\nconsole.log("Two Sum Test:", twoSum([2, 7, 11, 15], 9));\n`,
+      "Reverse Linked List": `# CodeSphere - Reverse Linked List Challenge\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef reverseList(head):\n    prev = None\n    curr = head\n    while curr:\n        next_node = curr.next\n        curr.next = prev\n        prev = curr\n        curr = next_node\n    return prev\n\nprint("Reverse Linked List loaded successfully!")\n`,
+      "Median of Two Sorted Arrays": `// CodeSphere - Median of Two Sorted Arrays (Hard)\nfunction findMedianSortedArrays(nums1, nums2) {\n    const merged = [...nums1, ...nums2].sort((a, b) => a - b);\n    const mid = Math.floor(merged.length / 2);\n    return merged.length % 2 !== 0 ? merged[mid] : (merged[mid - 1] + merged[mid]) / 2;\n}\nconsole.log("Median:", findMedianSortedArrays([1, 3], [2]));\n`,
+      "Longest Palindromic Substring": `// CodeSphere - Longest Palindromic Substring\nfunction longestPalindrome(s) {\n    if (!s || s.length <= 1) return s;\n    let start = 0, maxLength = 1;\n    function expand(left, right) {\n        while (left >= 0 && right < s.length && s[left] === s[right]) {\n            const len = right - left + 1;\n            if (len > maxLength) { start = left; maxLength = len; }\n            left--; right++;\n        }\n    }\n    for (let i = 0; i < s.length; i++) {\n        expand(i, i);\n        expand(i, i + 1);\n    }\n    return s.substring(start, start + maxLength);\n}\nconsole.log("Palindrome:", longestPalindrome("babad"));\n`
     };
 
     const updatedCode = { ...state.editorCode };
     if (pName.includes("Reverse")) {
-      updatedCode.python = templates[pName];
+      updatedCode.python = templates[pName] || templates["Reverse Linked List"];
       updateState({
         editorCode: updatedCode,
         activeLanguage: 'python',
         activeTab: 'practice'
       });
     } else {
-      updatedCode.javascript = templates[pName];
+      updatedCode.javascript = templates[pName] || templates["Two Sum"];
       updateState({
         editorCode: updatedCode,
         activeLanguage: 'javascript',
@@ -147,320 +64,293 @@ export function Dashboard() {
     }
   };
 
+  const studentName = state.googleUser ? state.googleUser.name : 'GitHub Contributor';
+
+  // ===========================================================================
+  // TEACHER DASHBOARD
+  // ===========================================================================
   if (state.role === 'teacher') {
-    return renderTeacherDashboard();
-  }
-
-  return renderStudentDashboard();
-
-  // Helper renderers
-  function renderStudentDashboard() {
-    const practicePuzzles = [
-      { id: "puzzle-1", title: "Two Sum", difficulty: "Easy", solved: true, accuracy: "94%" },
-      { id: "puzzle-2", title: "Reverse Linked List", difficulty: "Easy", solved: false, accuracy: "89%" },
-      { id: "puzzle-3", title: "Median of Two Sorted Arrays", difficulty: "Hard", solved: false, accuracy: "22%" },
-      { id: "puzzle-4", title: "Longest Palindromic Substring", difficulty: "Medium", solved: false, accuracy: "45%" }
-    ];
-
-    return html`
-      <div className="p-6 space-y-6 flex-grow overflow-y-auto">
-        <!-- Top header message -->
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800/40 pb-5 text-left">
-          <div>
-            <h2 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              Welcome back, ${state.googleUser ? state.googleUser.name : 'Eniyan Rajesh'}!
-            </h2>
-            <p className="text-xs text-slate-400">Track study metrics, verify certification tracks, and continue your assessment queues.</p>
-          </div>
-          
-          <div className="flex items-center space-x-2 font-mono text-xs text-slate-400 bg-slate-900/60 px-3.5 py-2 rounded-xl border border-slate-800/50">
-            <i data-lucide="award" className="w-4 h-4 text-indigo-400"></i>
-            <span>Arena Rating: <strong className="text-indigo-300">915 AP (#2)</strong></span>
-          </div>
-        </div>
-
-        <!-- Quick Metrics Grid -->
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Assignments Solved</span>
-              <div className="text-xl font-bold font-mono text-slate-200">1 / 3 Tasks</div>
-            </div>
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><i data-lucide="check-square" className="w-5 h-5"></i></div>
-          </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-cyan flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Coding Accuracy</span>
-              <div className="text-xl font-bold font-mono text-accent-cyan">89% Average</div>
-            </div>
-            <div className="p-2 bg-cyan-500/10 text-accent-cyan rounded-lg"><i data-lucide="target" className="w-5 h-5"></i></div>
-          </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-emerald flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Earned Certs</span>
-              <div className="text-xl font-bold font-mono text-accent-emerald">2 Certificates</div>
-            </div>
-            <div className="p-2 bg-emerald-500/10 text-accent-emerald rounded-lg"><i data-lucide="award" className="w-5 h-5"></i></div>
-          </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-rose flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Security Status</span>
-              <div className="text-xl font-bold font-mono text-accent-emerald">Verified Safe</div>
-            </div>
-            <div className="p-2 bg-rose-500/10 text-accent-rose rounded-lg"><i data-lucide="shield" className="w-5 h-5"></i></div>
-          </div>
-        </div>
-
-        <!-- Graph and details split grid -->
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
-          
-          <!-- Left: Progress Chart canvas -->
-          <div className="glass-panel p-5 rounded-2xl lg:col-span-2 space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <i data-lucide="bar-chart-3" className="w-4 h-4 text-indigo-400"></i> Performance Diagnostics Trends
-            </h3>
-            <div className="relative w-full h-64">
-              <canvas ref=${chartCanvasRef}></canvas>
-            </div>
-          </div>
-
-          <!-- Right: Strength & Weak Areas -->
-          <div className="glass-panel p-5 rounded-2xl space-y-4 flex flex-col justify-between">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <i data-lucide="brain" className="w-4 h-4 text-indigo-400"></i> Skill Diagnostic Index
-            </h3>
-            
-            <div className="space-y-3 flex-grow font-semibold">
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                  <span>JavaScript Core Algorithms</span>
-                  <span className="text-accent-cyan font-bold">92% (Advanced)</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                  <div className="bg-accent-cyan h-1.5 rounded-full" style=${{ width: '92%' }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                  <span>Python Scripting & recursion</span>
-                  <span className="text-indigo-400 font-bold">85% (Proficient)</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                  <div className="bg-indigo-500 h-1.5 rounded-full" style=${{ width: '85%' }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                  <span>SQL Server Schema queries</span>
-                  <span className="text-accent-emerald font-bold">78% (Intermediate)</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                  <div className="bg-accent-emerald h-1.5 rounded-full" style=${{ width: '78%' }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                  <span>C++ Low Level Pointers</span>
-                  <span className="text-accent-amber font-bold">60% (Developing)</span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                  <div className="bg-accent-amber h-1.5 rounded-full" style=${{ width: '60%' }}></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-950 flex justify-between text-[10px] text-slate-500 font-bold">
-              <span>Primary Competency: JavaScript</span>
-              <span>Focus Area: C++ memory</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Practice items grid -->
-        <div className="glass-panel p-5 rounded-2xl space-y-4 text-left">
-          <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-            <i data-lucide="code-2" className="w-4 h-4 text-indigo-400"></i> Sandbox Practice Arena
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            ${practicePuzzles.map(p => html`
-              <div key=${p.id} className="bg-slate-950/40 p-4 rounded-xl border border-slate-900 hover:border-slate-800 transition flex flex-col justify-between space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className=${`px-2 py-0.5 rounded text-[8px] font-bold font-mono ${
-                      p.difficulty === 'Easy' ? 'bg-emerald-500/10 text-accent-emerald border border-emerald-500/15' : p.difficulty === 'Medium' ? 'bg-amber-500/10 text-accent-amber border border-amber-500/15' : 'bg-rose-500/10 text-accent-rose border border-rose-500/15'
-                    }`}>
-                      ${p.difficulty}
-                    </span>
-                    ${p.solved && html`<span className="text-accent-emerald text-[10px] font-bold flex items-center gap-0.5"><i data-lucide="check" className="w-3.5 h-3.5"></i> Solved</span>`}
-                  </div>
-                  <h4 className="text-xs font-bold text-slate-300 truncate mt-1.5">${p.title}</h4>
-                </div>
-
-                <button 
-                  onClick=${() => handleSolvePuzzle(p.title)}
-                  className="w-full py-2 hover:bg-slate-800/80 rounded-lg text-slate-400 hover:text-slate-200 text-[10px] font-bold border border-slate-900 hover:border-slate-700/60 transition flex items-center justify-center gap-1"
-                >
-                  <i data-lucide="code-2" className="w-3.5 h-3.5"></i> Code Challenge
-                </button>
-              </div>
-            `)}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderTeacherDashboard() {
     const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
     const teacherClasses = (state.classes || []).filter(c => c.teacherEmail === currentTeacherEmail);
-    const teacherStudents = (state.studentProfiles || []).filter(s => s.teacherEmail === currentTeacherEmail);
-
-    const totalStudents = teacherStudents.length;
-    let totalSubmissionsCount = 0;
-    let totalPercent = 0;
-    let submissionsCount = 0;
-    
-    teacherClasses.forEach(c => {
-      c.assignments.forEach(a => {
-        totalSubmissionsCount += (a.submissions ? a.submissions.length : 0);
-        const maxPoints = a.maxPoints || 100;
-        if (a.submissions) {
-          a.submissions.forEach(s => {
-            totalPercent += (s.score / maxPoints) * 100;
-            submissionsCount++;
-          });
-        }
-      });
-    });
-    
-    const avgPercentage = submissionsCount > 0 ? (totalPercent / submissionsCount).toFixed(1) : "0.0";
-
-    const classScores = teacherClasses.map(c => {
-      let classPercent = 0;
-      let classSubCount = 0;
-      c.assignments.forEach(a => {
-        const maxPoints = a.maxPoints || 100;
-        if (a.submissions) {
-          a.submissions.forEach(s => {
-            classPercent += (s.score / maxPoints) * 100;
-            classSubCount++;
-          });
-        }
-      });
-      const avg = classSubCount > 0 ? Math.round(classPercent / classSubCount) : 0;
-      return {
-        code: c.code,
-        name: c.name.split(': ')[1] || c.name,
-        avg: avg
-      };
-    });
-
-    let highestClassCode = "None";
-    let highestClassAvg = -1;
-    classScores.forEach(cs => {
-      if (cs.avg > highestClassAvg) {
-        highestClassAvg = cs.avg;
-        highestClassCode = cs.code;
-      }
-    });
+    const totalStudents = teacherClasses.reduce((acc, c) => acc + (c.enrolledStudents ? c.enrolledStudents.length : 0), 0);
+    const totalSubmissions = teacherClasses.reduce((acc, c) => {
+      return acc + (c.assignments || []).reduce((subAcc, a) => subAcc + (a.submissions ? a.submissions.length : 0), 0);
+    }, 0);
 
     return html`
-      <div className="p-6 space-y-6 flex-grow overflow-y-auto">
-        <!-- Top header message -->
-        <div className="flex justify-between items-center border-b border-slate-800/40 pb-5 text-left">
+      <div className="p-6 md:p-8 space-y-6 flex-grow overflow-y-auto select-none" style=${{ background: 'transparent' }}>
+        
+        <!-- Header -->
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[#D5DEF2]">
           <div>
-            <h2 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              Supervising Classroom Analytics
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16213E] tracking-tight">
+              Classroom & Examination Analytics
             </h2>
-            <p className="text-xs text-slate-400">Audit class sizes, track evaluation indices, and analyze programming compiler languages metrics.</p>
+            <p className="text-sm text-[#566180] mt-0.5">Audit student performance, proctoring alerts, and automated compiler testing queues.</p>
+          </div>
+          <div className="rating">
+            <span>Faculty ID: <b className="mono font-bold text-[#4F46E5]">${currentTeacherEmail || 'Dr. Sarah Jenkins'}</b></span>
           </div>
         </div>
 
-        <!-- Quick Metrics Grid -->
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-indigo-500 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Supervised Students</span>
-              <div className="text-xl font-bold font-mono text-slate-200">${totalStudents} Enrolled</div>
-            </div>
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><i data-lucide="users" className="w-5 h-5"></i></div>
+        <!-- 4 Stat Cards (3D Tilt) -->
+        <div className="stats scene3d">
+          <div className="stat tilt" data-tilt="6">
+            <span className="ic">&#10003;</span>
+            <small>Active Classrooms</small>
+            <strong className="mono">${teacherClasses.length} Classes</strong>
           </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-cyan flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Class Pass Ratio</span>
-              <div className="text-xl font-bold font-mono text-accent-cyan">${avgPercentage}% Percentage</div>
-            </div>
-            <div className="p-2 bg-cyan-500/10 text-accent-cyan rounded-lg"><i data-lucide="trending-up" className="w-5 h-5"></i></div>
+          <div className="stat t tilt" data-tilt="6">
+            <span className="ic">&#9678;</span>
+            <small>Supervised Students</small>
+            <strong className="mono">${totalStudents} Enrolled</strong>
           </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-emerald flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Tasks Submitted</span>
-              <div className="text-xl font-bold font-mono text-accent-emerald">${totalSubmissionsCount} Total Solutions</div>
-            </div>
-            <div className="p-2 bg-emerald-500/10 text-accent-emerald rounded-lg"><i data-lucide="file-check-2" className="w-5 h-5"></i></div>
+          <div className="stat a tilt" data-tilt="6">
+            <span className="ic">&#9733;</span>
+            <small>Submitted Solutions</small>
+            <strong className="mono">${totalSubmissions} Graded</strong>
           </div>
-
-          <div className="glass-panel p-4.5 rounded-2xl border-l-4 border-accent-rose flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Security Events Logged</span>
-              <div className="text-xl font-bold font-mono text-accent-rose">${state.securityLogs.length} Warnings</div>
-            </div>
-            <div className="p-2 bg-rose-500/10 text-accent-rose rounded-lg"><i data-lucide="shield-alert" className="w-5 h-5"></i></div>
+          <div className="stat g tilt" data-tilt="6">
+            <span className="ic">&#9919;</span>
+            <small>Security Proctoring</small>
+            <strong className="mono">0 Critical Flags</strong>
           </div>
         </div>
 
-        <!-- Graph and details split grid -->
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
+        <!-- Management Split Grid -->
+        <div className="grid2 scene3d">
           
-          <!-- Left: Progress Chart canvas -->
-          <div className="glass-panel p-5 rounded-2xl lg:col-span-2 space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <i data-lucide="bar-chart-3" className="w-4 h-4 text-indigo-400"></i> Compiler Languages Allocation & Usage Index
-            </h3>
-            <div className="relative w-full h-64">
-              <canvas ref=${chartCanvasRef}></canvas>
-            </div>
-          </div>
-
-          <!-- Right: Syllabus tracker -->
-          <div className="glass-panel p-5 rounded-2xl space-y-4 flex flex-col justify-between">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <i data-lucide="compass" className="w-4 h-4 text-indigo-400"></i> Course Curriculum Marks
-            </h3>
-            
-            <div className="space-y-3.5 flex-grow font-semibold">
-              ${classScores.map(cs => html`
-                <div key=${cs.code}>
-                  <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                    <span>${cs.code} (${cs.name})</span>
-                    <span className="text-indigo-400 font-bold">${cs.avg}% Avg Score</span>
+          <!-- Classrooms list -->
+          <div className="box tilt" data-tilt="4">
+            <h3>Supervised Classes</h3>
+            <div className="space-y-3 mt-3">
+              ${teacherClasses.map(c => html`
+                <div key=${c.id || c.code} className="flex justify-between items-center p-3 rounded-xl bg-[#F7F9FE] border border-[#D5DEF2]">
+                  <div>
+                    <div className="font-bold text-[#16213E] text-sm">${c.name}</div>
+                    <div className="text-xs text-[#566180]">Code: <span className="font-mono font-bold text-[#0E9F9A]">${c.code}</span> • ${c.enrolledStudents ? c.enrolledStudents.length : 0} Students</div>
                   </div>
-                  <div className="w-full bg-slate-900 rounded-full h-1.5 border border-slate-800/40">
-                    <div className="bg-indigo-500 h-1.5 rounded-full" style=${{ width: `${cs.avg}%` }}></div>
-                  </div>
+                  <button onClick=${() => updateState({ activeTab: 'classroom' })} className="chip text-xs">
+                    View
+                  </button>
                 </div>
               `)}
-              ${classScores.length === 0 && html`
-                <div className="text-xs text-slate-500 font-medium text-center py-8">No supervised classes created yet.</div>
+              ${teacherClasses.length === 0 && html`
+                <div className="text-center py-6 text-sm text-[#566180]">
+                  No classes created yet. Click "Classroom" on the sidebar to create one.
+                </div>
               `}
             </div>
+          </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-950 flex justify-between text-[10px] text-slate-500 font-bold">
-              <span>Highest Class: ${highestClassCode}</span>
-              <span>Total Classes: ${teacherClasses.length}</span>
+          <!-- Quick Action panel -->
+          <div className="box tilt" data-tilt="4">
+            <h3>Faculty Actions</h3>
+            <div className="space-y-3 mt-3">
+              <button onClick=${() => updateState({ activeTab: 'classroom' })} className="btn text-sm">
+                + Create New Classroom
+              </button>
+              <button onClick=${() => updateState({ activeTab: 'proctoring' })} className="btn teal text-sm">
+                Open Live Proctoring Radar
+              </button>
+              <button onClick=${() => updateState({ activeTab: 'students' })} className="chip w-full justify-center text-sm py-2.5">
+                Generate Student Access Keys
+              </button>
             </div>
           </div>
+
         </div>
+
       </div>
     `;
   }
+
+  // ===========================================================================
+  // STUDENT DASHBOARD (Matches User's 3D Light Prototype)
+  // ===========================================================================
+  return html`
+    <div className="p-6 md:p-8 space-y-6 flex-grow overflow-y-auto select-none" style=${{ background: 'transparent' }}>
+      
+      <!-- Top Welcome Header & Rating -->
+      <div className="head">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#16213E] tracking-tight">
+            Welcome back, ${studentName}!
+          </h2>
+          <p className="text-sm text-[#566180] mt-0.5">
+            Track your progress, check your certificates and continue your assessments.
+          </p>
+        </div>
+        <div className="rating">
+          Arena rating: <b className="mono font-bold text-[#4F46E5]">915 AP (#2)</b>
+        </div>
+      </div>
+
+      <!-- 4 Stats Cards with 3D Tilt -->
+      <div className="stats scene3d">
+        
+        <div className="stat tilt" data-tilt="8">
+          <span className="ic">&#10003;</span>
+          <small>Assignments solved</small>
+          <strong className="mono">1 / 3 tasks</strong>
+        </div>
+
+        <div className="stat t tilt" data-tilt="8">
+          <span className="ic">&#9678;</span>
+          <small>Coding accuracy</small>
+          <strong className="mono">89% average</strong>
+        </div>
+
+        <div className="stat a tilt" data-tilt="8">
+          <span className="ic">&#9733;</span>
+          <small>Earned certificates</small>
+          <strong className="mono">2 certificates</strong>
+        </div>
+
+        <div className="stat g tilt" data-tilt="8">
+          <span className="ic">&#9919;</span>
+          <small>Security status</small>
+          <strong className="mono">Verified safe</strong>
+        </div>
+
+      </div>
+
+      <!-- Performance Chart & Skill Levels Split Grid -->
+      <div className="grid2 scene3d">
+        
+        <!-- Performance Trend SVG Chart -->
+        <div className="box tilt" data-tilt="3">
+          <h3>Performance trend</h3>
+          <svg className="chart" viewBox="0 0 680 290" role="img" aria-label="Score rose from 75 on June 5 to a peak of 95 on June 20, then 90 on June 23">
+            <defs>
+              <linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#4F46E5" stop-opacity=".35"/>
+                <stop offset="1" stop-color="#4F46E5" stop-opacity="0"/>
+              </linearGradient>
+              <filter id="sh" x="-10%" y="-10%" width="120%" height="140%">
+                <feDropShadow dx="0" dy="10" stdDeviation="6" flood-color="#3730A3" flood-opacity=".35"/>
+              </filter>
+            </defs>
+            <g stroke="#D5DEF2">
+              <line x1="40" x2="640" y1="30" y2="30"/>
+              <line x1="40" x2="640" y1="80" y2="80"/>
+              <line x1="40" x2="640" y1="130" y2="130"/>
+              <line x1="40" x2="640" y1="180" y2="180"/>
+              <line x1="40" x2="640" y1="230" y2="230"/>
+            </g>
+            <g text-anchor="end" fill="#566180">
+              <text x="30" y="34">95</text>
+              <text x="30" y="84">90</text>
+              <text x="30" y="134">85</text>
+              <text x="30" y="184">80</text>
+              <text x="30" y="234">75</text>
+            </g>
+            <path d="M40 230 C110 205,150 190,201 180 S300 150,362 130 S470 30,524 30 S590 70,620 80 L620 230 L40 230Z" fill="url(#ar)"/>
+            <path d="M40 230 C110 205,150 190,201 180 S300 150,362 130 S470 30,524 30 S590 70,620 80" fill="none" stroke="#4F46E5" stroke-width="5" stroke-linecap="round" filter="url(#sh)"/>
+            <g fill="#fff" stroke="#4F46E5" stroke-width="4">
+              <circle cx="40" cy="230" r="7"/>
+              <circle cx="201" cy="180" r="7"/>
+              <circle cx="362" cy="130" r="7"/>
+              <circle cx="524" cy="30" r="9"/>
+              <circle cx="620" cy="80" r="7"/>
+            </g>
+            <g text-anchor="middle" fill="#566180">
+              <text x="40" y="258">June 5</text>
+              <text x="201" y="258">June 10</text>
+              <text x="362" y="258">June 15</text>
+              <text x="524" y="258">June 20</text>
+              <text x="620" y="258">June 23</text>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Skill Levels with Glossy Inset Bars -->
+        <div className="box tilt" data-tilt="3">
+          <h3>Skill levels</h3>
+          
+          <div className="skill" style=${{ '--c': '#0E9F9A' }}>
+            <div><span>JavaScript core algorithms</span><span className="font-bold text-[#0E9F9A]">92% Advanced</span></div>
+            <div className="bar"><i style=${{ width: '92%' }}></i></div>
+          </div>
+
+          <div className="skill" style=${{ '--c': '#4F46E5' }}>
+            <div><span>Python scripting and recursion</span><span className="font-bold text-[#4F46E5]">85% Proficient</span></div>
+            <div className="bar"><i style=${{ width: '85%' }}></i></div>
+          </div>
+
+          <div className="skill" style=${{ '--c': '#16A34A' }}>
+            <div><span>SQL Server schema queries</span><span className="font-bold text-[#16A34A]">78% Intermediate</span></div>
+            <div className="bar"><i style=${{ width: '78%' }}></i></div>
+          </div>
+
+          <div className="skill" style=${{ '--c': '#F59E0B' }}>
+            <div><span>C++ low-level pointers</span><span className="font-bold text-[#F59E0B]">60% Developing</span></div>
+            <div className="bar"><i style=${{ width: '60%' }}></i></div>
+          </div>
+
+          <div className="focus">
+            <span>Strongest: <strong className="text-[#0E9F9A]">JavaScript</strong></span>
+            <span>Work on: <strong className="text-[#F59E0B]">C++ memory</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Practice Arena Module Launchers -->
+      <div className="box">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-base text-[#16213E]">Practice arena</h3>
+          <button onClick=${() => updateState({ activeTab: 'practice' })} className="chip text-xs">
+            Open Full Compiler
+          </button>
+        </div>
+
+        <div className="arena scene3d">
+          
+          <article className="prob tilt" data-tilt="8">
+            <header>
+              <span className="tag easy">Easy</span>
+              <span className="solved">&#10003; Solved</span>
+            </header>
+            <h4>Two Sum</h4>
+            <button className="btn" onClick=${() => handleLaunchChallenge('Two Sum')}>
+              Open challenge
+            </button>
+          </article>
+
+          <article className="prob tilt" data-tilt="8">
+            <header>
+              <span className="tag easy">Easy</span>
+            </header>
+            <h4>Reverse Linked List</h4>
+            <button className="btn" onClick=${() => handleLaunchChallenge('Reverse Linked List')}>
+              Open challenge
+            </button>
+          </article>
+
+          <article className="prob tilt" data-tilt="8">
+            <header>
+              <span className="tag hard">Hard</span>
+            </header>
+            <h4>Median of Two Sorted Arrays</h4>
+            <button className="btn" onClick=${() => handleLaunchChallenge('Median of Two Sorted Arrays')}>
+              Open challenge
+            </button>
+          </article>
+
+          <article className="prob tilt" data-tilt="8">
+            <header>
+              <span className="tag medium">Medium</span>
+            </header>
+            <h4>Longest Palindromic Substring</h4>
+            <button className="btn" onClick=${() => handleLaunchChallenge('Longest Palindromic Substring')}>
+              Open challenge
+            </button>
+          </article>
+
+        </div>
+      </div>
+
+    </div>
+  `;
 }

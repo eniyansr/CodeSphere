@@ -1,4 +1,5 @@
-// CodeSphere Pro - Sidebar Menu Component (React Edition)
+// CodeSphere Pro - 3D Tactile Sidebar Menu Component (React Edition)
+// Exact match to 3D light-theme sidebar: extruded active 3D key, hover slide, and smooth tab navigation.
 import React from 'https://esm.sh/react@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 
@@ -6,26 +7,28 @@ export function Sidebar() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
 
+  // Menu items configured with icons matching the 3D tactile UI
   const menuConfig = {
     student: [
-      { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
-      { id: 'classroom', label: t.classroom, icon: 'book-open' },
-      { id: 'exams', label: t.exams, icon: 'clipboard-check' },
-      { id: 'practice', label: t.practice, icon: 'code-2' },
-      { id: 'battle', label: t.battle, icon: 'zap' },
-      { id: 'certificates', label: t.certificates, icon: 'award' },
-      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
+      { id: 'dashboard',    label: 'Dashboard',      icon: 'layout-grid' },
+      { id: 'classroom',    label: 'Classroom',      icon: 'book-open' },
+      { id: 'exams',        label: 'Examination',    icon: 'check-square' },
+      { id: 'practice',     label: 'Practice arena', icon: 'code-2' },
+      { id: 'battle',       label: 'Coding battle',  icon: 'zap' },
+      { id: 'certificates', label: 'Certificates',   icon: 'award' },
+      { id: 'notepad',      label: 'Notepad',        icon: 'pencil' }
     ],
     teacher: [
-      { id: 'dashboard', label: t.dashboard, icon: 'layout-dashboard' },
-      { id: 'classroom', label: t.classroom, icon: 'book-open' },
-      { id: 'students', label: t.students || 'Students List', icon: 'users' },
-      { id: 'proctoring', label: t.proctoring, icon: 'eye' },
-      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
+      { id: 'dashboard',    label: 'Dashboard',        icon: 'layout-grid' },
+      { id: 'classroom',    label: 'Classroom',        icon: 'book-open' },
+      { id: 'students',     label: 'Students List',    icon: 'users' },
+      { id: 'proctoring',   label: 'Live Proctoring',  icon: 'shield-alert' },
+      { id: 'exams',        label: 'Examination',      icon: 'check-square' },
+      { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
     ],
     admin: [
-      { id: 'admin', label: t.admin, icon: 'shield-check' },
-      { id: 'notepad', label: t.notepad || 'Notepad', icon: 'notebook-pen' }
+      { id: 'admin',        label: 'Admin Control',    icon: 'shield-check' },
+      { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
     ]
   };
 
@@ -40,49 +43,70 @@ export function Sidebar() {
   };
 
   return html`
-    <aside className="glass-panel w-full md:w-64 flex-shrink-0 flex flex-col justify-between border-r border-slate-800/40 p-4 min-h-[auto] md:min-h-[calc(100vh-76px)]">
+    <aside className="w-full md:w-[260px] flex-shrink-0 flex flex-col justify-between p-4 min-h-[auto] md:min-h-[calc(100vh-76px)] border-r transition-all duration-200 select-none"
+           style=${{
+             background: 'linear-gradient(180deg, #FFFFFF, #EEF3FD)',
+             borderColor: '#D5DEF2',
+             boxShadow: '8px 0 30px -18px rgba(22,33,62,0.28)'
+           }}>
       
       <!-- Top Navigation Tabs List -->
-      <div className="space-y-6 text-left">
-        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 px-3">
-          Navigation
+      <div className="space-y-4 text-left">
+        
+        <!-- Online System Indicator -->
+        <div className="flex items-center gap-2 px-2 pt-1 text-xs font-semibold text-slate-500">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" style=${{ boxShadow: '0 0 0 4px #D3F3DE' }}></span>
+          <span>System connected</span>
         </div>
         
-        <nav className="space-y-1" id="sidebar-nav">
+        <!-- Navigation Buttons -->
+        <nav className="flex flex-col gap-2" id="sidebar-nav">
           ${activeMenu.map(item => {
             const isActive = item.id === 'notepad' ? state.notepadOpen : state.activeTab === item.id;
+            
             return html`
               <button 
                 key=${item.id}
                 onClick=${() => handleTabClick(item.id)}
-                className=${`w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-150 relative group ${
+                className=${`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[15px] font-bold text-left transition-all duration-150 relative cursor-pointer ${
                   isActive 
-                    ? 'bg-indigo-500/10 text-indigo-400 border-l-4 border-indigo-500' 
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                    ? 'text-white' 
+                    : 'text-[#566180] hover:text-[#16213E] hover:bg-white hover:translate-x-1'
                 }`}
+                style=${isActive ? {
+                  background: 'linear-gradient(180deg, #6366F1, #4F46E5)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.4) inset, 0 5px 0 #3730A3, 0 12px 16px -8px rgba(22,33,62,0.28)',
+                  transform: 'translateY(-2px)'
+                } : {
+                  boxShadow: 'none'
+                }}
               >
-                <i data-lucide=${item.icon} className=${`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-200'}`}></i>
-                <span>${item.label}</span>
-                ${isActive && html`<span className="absolute right-3 top-3 w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-glow-indigo"></span>`}
+                <i data-lucide=${item.icon} className=${`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-[#566180]'}`}></i>
+                <span className="truncate">${item.label}</span>
               </button>
             `;
           })}
         </nav>
       </div>
 
-      <!-- Bottom Platform Quick Statistics -->
-      <div className="mt-8 pt-6 border-t border-slate-800/40 space-y-4">
-        <div className="bg-slate-900/40 p-3.5 rounded-xl border border-slate-800/30 text-xs">
-          <div className="flex justify-between items-center text-slate-400 mb-1.5 font-medium">
-            <span>Secure Lockdown:</span>
-            <span className="font-bold text-accent-emerald">Verified</span>
+      <!-- Bottom Platform Quick Statistics & Lock status -->
+      <div className="mt-8 pt-5 border-t border-[#D5DEF2] space-y-3">
+        
+        <!-- Secure Lockdown Bevel Box -->
+        <div className="bg-white p-3.5 rounded-2xl border border-[#D5DEF2] text-xs font-semibold"
+             style=${{ boxShadow: '0 4px 0 #D5DEF2' }}>
+          <div className="flex justify-between items-center text-[#16213E] mb-2">
+            <span>Secure lockdown</span>
+            <em className="not-italic text-emerald-600 font-bold">Verified</em>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1">
-            <div className="bg-accent-emerald h-1 rounded-full" style=${{ width: '100%' }}></div>
-          </div>
+          <i className="block h-2 rounded-full"
+             style=${{
+               background: 'linear-gradient(90deg, #34D399, #16A34A)',
+               boxShadow: '0 2px 0 #0F7A36'
+             }}></i>
         </div>
 
-        <div className="text-[10px] text-center text-slate-500 font-semibold uppercase tracking-wider">
+        <div className="text-[11px] text-center text-[#566180] font-mono tracking-wide">
           CodeSphere Pro v2.4.0
         </div>
       </div>
