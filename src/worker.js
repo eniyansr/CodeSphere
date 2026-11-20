@@ -18,20 +18,19 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const PISTON_API = 'https://emkc.org/api/v2/piston';
+const WANDBOX_API = 'https://wandbox.org/api/compile.json';
 
-const PISTON_LANG_MAP = {
-  javascript: { language: 'javascript', version: '18.15.0' },
-  typescript: { language: 'typescript', version: '5.0.3' },
-  python:     { language: 'python',     version: '3.10.0' },
-  cpp:        { language: 'c++',        version: '10.2.0' },
-  c:          { language: 'c',          version: '10.2.0' },
-  java:       { language: 'java',       version: '15.0.2' },
-  go:         { language: 'go',         version: '1.16.2' },
-  rust:       { language: 'rust',       version: '1.50.0' },
-  php:        { language: 'php',        version: '8.2.3'  },
-  ruby:       { language: 'ruby',       version: '3.0.1'  },
-  swift:      { language: 'swift',      version: '5.3.3'  },
+const COMPILER_MAP = {
+  php:        { compiler: 'php-8.3.12' },
+  cpp:        { compiler: 'gcc-head', options: 'warning,c++23' },
+  c:          { compiler: 'gcc-head-c', options: 'warning' },
+  java:       { compiler: 'openjdk-jdk-22+36' },
+  typescript: { compiler: 'typescript-5.6.2' },
+  rust:       { compiler: 'rust-1.82.0' },
+  ruby:       { compiler: 'ruby-4.0.2' },
+  csharp:     { compiler: 'mono-6.12.0.199' },
+  swift:      { compiler: 'swift-6.0.1' },
+  python:     { compiler: 'cpython-3.12.7' }
 };
 
 function jsonResponse(data, status = 200) {
@@ -449,33 +448,39 @@ export default {
       return handleGetObject(recordId, request, env);
     }
 
-    // Code execution via Piston API
+    // Code execution via Wandbox API
     if (path === '/api/run-code' && method === 'POST') {
       let body;
       try { body = await request.json(); } catch { return errorResponse('Invalid JSON'); }
       const { language, code, stdin = '' } = body;
       if (!language || !code) return errorResponse('Missing language or code');
 
-      const pistonLang = PISTON_LANG_MAP[language.toLowerCase()];
-      if (!pistonLang) return errorResponse(`Unsupported runtime: ${language}`);
+      const meta = COMPILER_MAP[language.toLowerCase()];
+      if (!meta) return errorResponse(`Unsupported runtime: ${language}`);
+
+      let processedCode = code;
+      if (language.toLowerCase() === 'java') {
+        processedCode = processedCode.replace(/\bpublic\s+class\b/g, 'class');
+      }
 
       try {
-        const pistonRes = await fetch(`${PISTON_API}/execute`, {
+        const wandboxRes = await fetch(WANDBOX_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            language: pistonLang.language,
-            version: pistonLang.version,
-            files: [{ name: 'main.txt', content: code }],
+            compiler: meta.compiler,
+            code: processedCode,
+            options: meta.options || '',
             stdin
           })
         });
 
-        if (!pistonRes.ok) return errorResponse('Code runner temporarily unavailable', 502);
-        const result = await pistonRes.json();
-        return jsonResponse({ success: true, run: result.run || {} });
+        if (!wandboxRes.ok) return errorResponse('Code runner temporarily unavailable', 502);
+        const result = await wandboxRes.json();
+        const output = (result.program_output || result.program_message || result.compiler_message || '').trim() || '(Program completed with no output)';
+        return jsonResponse({ success: result.status === '0', run: { output } });
       } catch (e) {
-        return errorResponse('Failed to reach execution runner', 503);
+        return errorResponse('Failed to reach execution runner: ' + e.message, 503);
       }
     }
 

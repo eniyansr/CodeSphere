@@ -21,17 +21,15 @@ export function EditorWorkspace() {
   const languagesList = [
     { id: 'javascript', label: 'JavaScript',   badge: 'V8 Sandbox',      ext: 'js',   monaco: 'javascript' },
     { id: 'python',     label: 'Python 3',      badge: 'Pyodide WASM',    ext: 'py',   monaco: 'python'      },
-    { id: 'cpp',        label: 'C++',           badge: 'GCC 12',          ext: 'cpp',  monaco: 'cpp'         },
+    { id: 'php',        label: 'PHP',           badge: 'PHP 8.3',         ext: 'php',  monaco: 'php'         },
+    { id: 'cpp',        label: 'C++',           badge: 'GCC 14',          ext: 'cpp',  monaco: 'cpp'         },
     { id: 'c',          label: 'C',             badge: 'C17',             ext: 'c',    monaco: 'c'           },
-    { id: 'java',       label: 'Java',          badge: 'JVM 17',          ext: 'java', monaco: 'java'        },
-    { id: 'typescript', label: 'TypeScript',    badge: 'TS 5.0',          ext: 'ts',   monaco: 'typescript'  },
-    { id: 'go',         label: 'Go',            badge: 'Go 1.21',         ext: 'go',   monaco: 'go'          },
-    { id: 'rust',       label: 'Rust',          badge: 'Rust 1.75',       ext: 'rs',   monaco: 'rust'        },
-    { id: 'php',        label: 'PHP',           badge: 'PHP 8.2',         ext: 'php',  monaco: 'php'         },
-    { id: 'swift',      label: 'Swift',         badge: 'Swift 5.9',       ext: 'swift',monaco: 'swift'       },
-    { id: 'kotlin',     label: 'Kotlin',        badge: 'Kotlin 1.9',      ext: 'kt',   monaco: 'kotlin'      },
-    { id: 'ruby',       label: 'Ruby',          badge: 'Ruby 3.3',        ext: 'rb',   monaco: 'ruby'        },
-    { id: 'csharp',     label: 'C#',            badge: '.NET 8',          ext: 'cs',   monaco: 'csharp'      },
+    { id: 'java',       label: 'Java',          badge: 'OpenJDK 22',      ext: 'java', monaco: 'java'        },
+    { id: 'typescript', label: 'TypeScript',    badge: 'TS 5.6',          ext: 'ts',   monaco: 'typescript'  },
+    { id: 'rust',       label: 'Rust',          badge: 'Rust 1.82',       ext: 'rs',   monaco: 'rust'        },
+    { id: 'ruby',       label: 'Ruby',          badge: 'Ruby 4.0',        ext: 'rb',   monaco: 'ruby'        },
+    { id: 'csharp',     label: 'C#',            badge: 'Mono .NET',       ext: 'cs',   monaco: 'csharp'      },
+    { id: 'swift',      label: 'Swift',         badge: 'Swift 6.0',       ext: 'swift',monaco: 'swift'       },
     { id: 'html',       label: 'HTML/CSS/JS',   badge: 'Live Preview',    ext: 'html', monaco: 'html'        },
   ];
 
@@ -40,24 +38,8 @@ export function EditorWorkspace() {
   // Load starter code for a language the first time it's selected
   useEffect(() => {
     if (!state.editorCode || !state.editorCode[activeLang]) {
-      const starterCode = {
-        javascript: `// JavaScript\nconsole.log("Hello from CodeSphere!");`,
-        python:     `# Python 3\nprint("Hello from CodeSphere!")`,
-        cpp:        `#include <iostream>\nusing namespace std;\nint main() {\n    cout << "Hello from CodeSphere!" << endl;\n    return 0;\n}`,
-        c:          `#include <stdio.h>\nint main() {\n    printf("Hello from CodeSphere!\\n");\n    return 0;\n}`,
-        java:       `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from CodeSphere!");\n    }\n}`,
-        typescript: `const msg: string = "Hello from CodeSphere!";\nconsole.log(msg);`,
-        go:         `package main\nimport "fmt"\nfunc main() {\n    fmt.Println("Hello from CodeSphere!")\n}`,
-        rust:       `fn main() {\n    println!("Hello from CodeSphere!");\n}`,
-        php:        `<?php\n// PHP 8.2\n$greeting = "Hello from CodeSphere!";\necho $greeting . "\\n";\n\n$langs = ["Python", "JavaScript", "PHP", "Java"];\nforeach ($langs as $lang) {\n    echo "Language: " . $lang . "\\n";\n}\n?>`,
-        swift:      `import Foundation\nlet msg = "Hello from CodeSphere!"\nprint(msg)`,
-        kotlin:     `fun main() {\n    println("Hello from CodeSphere!")\n}`,
-        ruby:       `greeting = "Hello from CodeSphere!"\nputs greeting`,
-        csharp:     `using System;\nclass Program {\n    static void Main() {\n        Console.WriteLine("Hello from CodeSphere!");\n    }\n}`,
-        html:       `<!DOCTYPE html>\n<html>\n<head><title>CodeSphere Preview</title></head>\n<body>\n  <h1 style="color:#4f46e5">Hello from CodeSphere! 🚀</h1>\n</body>\n</html>`,
-      };
       const updatedCode = { ...(state.editorCode || {}) };
-      updatedCode[activeLang] = starterCode[activeLang] || `// ${activeLang}\n// Start coding here`;
+      updatedCode[activeLang] = STARTER_CODE[activeLang] || `// ${activeLang}\n// Start coding here`;
       updateState({ editorCode: updatedCode });
     }
   }, [activeLang]);
