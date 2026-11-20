@@ -3,7 +3,13 @@ import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0'
 import Editor from 'https://esm.sh/@monaco-editor/react@4.6.0?deps=react@18.2.0,react-dom@18.2.0';
 import { TRANSLATIONS, html, useAppState } from '../state.js';
 import { executeCode } from '../services/compiler-service.js';
-import { submitEncryptedCode } from '../services/encryption-service.js';
+
+// Dynamic import for E2EE submission (crypto chain) so it doesn't block the editor
+let _submitEncryptedCode = async () => { throw new Error('Encryption service not ready'); };
+import('../services/encryption-service.js')
+  .then(m => { _submitEncryptedCode = m.submitEncryptedCode; })
+  .catch(err => console.warn('[CodeSphere] encryption-service load failed:', err));
+const submitEncryptedCode = (...a) => _submitEncryptedCode(...a);
 
 export function EditorWorkspace() {
   const { state, updateState } = useAppState();
@@ -11,19 +17,50 @@ export function EditorWorkspace() {
   const activeLang = state.activeLanguage || 'javascript';
   const currentCode = (state.editorCode && state.editorCode[activeLang]) || '';
 
+  // ─── Language metadata: id, display label, badge, file extension, Monaco language id ───
   const languagesList = [
-    { id: 'javascript', label: 'JavaScript', badge: 'V8 Sandbox' },
-    { id: 'python', label: 'Python 3', badge: 'Pyodide WASM' },
-    { id: 'cpp', label: 'C++', badge: 'GCC 12' },
-    { id: 'c', label: 'C', badge: 'C17' },
-    { id: 'java', label: 'Java', badge: 'JVM 17' },
-    { id: 'typescript', label: 'TypeScript', badge: 'TS 5.0' },
-    { id: 'go', label: 'Go', badge: 'Go 1.21' },
-    { id: 'rust', label: 'Rust', badge: 'Rust 1.75' },
-    { id: 'html', label: 'HTML/CSS/JS', badge: 'Live Preview' }
+    { id: 'javascript', label: 'JavaScript',   badge: 'V8 Sandbox',      ext: 'js',   monaco: 'javascript' },
+    { id: 'python',     label: 'Python 3',      badge: 'Pyodide WASM',    ext: 'py',   monaco: 'python'      },
+    { id: 'cpp',        label: 'C++',           badge: 'GCC 12',          ext: 'cpp',  monaco: 'cpp'         },
+    { id: 'c',          label: 'C',             badge: 'C17',             ext: 'c',    monaco: 'c'           },
+    { id: 'java',       label: 'Java',          badge: 'JVM 17',          ext: 'java', monaco: 'java'        },
+    { id: 'typescript', label: 'TypeScript',    badge: 'TS 5.0',          ext: 'ts',   monaco: 'typescript'  },
+    { id: 'go',         label: 'Go',            badge: 'Go 1.21',         ext: 'go',   monaco: 'go'          },
+    { id: 'rust',       label: 'Rust',          badge: 'Rust 1.75',       ext: 'rs',   monaco: 'rust'        },
+    { id: 'php',        label: 'PHP',           badge: 'PHP 8.2',         ext: 'php',  monaco: 'php'         },
+    { id: 'swift',      label: 'Swift',         badge: 'Swift 5.9',       ext: 'swift',monaco: 'swift'       },
+    { id: 'kotlin',     label: 'Kotlin',        badge: 'Kotlin 1.9',      ext: 'kt',   monaco: 'kotlin'      },
+    { id: 'ruby',       label: 'Ruby',          badge: 'Ruby 3.3',        ext: 'rb',   monaco: 'ruby'        },
+    { id: 'csharp',     label: 'C#',            badge: '.NET 8',          ext: 'cs',   monaco: 'csharp'      },
+    { id: 'html',       label: 'HTML/CSS/JS',   badge: 'Live Preview',    ext: 'html', monaco: 'html'        },
   ];
 
   const activeLangMeta = languagesList.find(l => l.id === activeLang) || languagesList[0];
+
+  // Load starter code for a language the first time it's selected
+  useEffect(() => {
+    if (!state.editorCode || !state.editorCode[activeLang]) {
+      const starterCode = {
+        javascript: `// JavaScript\nconsole.log("Hello from CodeSphere!");`,
+        python:     `# Python 3\nprint("Hello from CodeSphere!")`,
+        cpp:        `#include <iostream>\nusing namespace std;\nint main() {\n    cout << "Hello from CodeSphere!" << endl;\n    return 0;\n}`,
+        c:          `#include <stdio.h>\nint main() {\n    printf("Hello from CodeSphere!\\n");\n    return 0;\n}`,
+        java:       `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello from CodeSphere!");\n    }\n}`,
+        typescript: `const msg: string = "Hello from CodeSphere!";\nconsole.log(msg);`,
+        go:         `package main\nimport "fmt"\nfunc main() {\n    fmt.Println("Hello from CodeSphere!")\n}`,
+        rust:       `fn main() {\n    println!("Hello from CodeSphere!");\n}`,
+        php:        `<?php\n// PHP 8.2\n$greeting = "Hello from CodeSphere!";\necho $greeting . "\\n";\n\n$langs = ["Python", "JavaScript", "PHP", "Java"];\nforeach ($langs as $lang) {\n    echo "Language: " . $lang . "\\n";\n}\n?>`,
+        swift:      `import Foundation\nlet msg = "Hello from CodeSphere!"\nprint(msg)`,
+        kotlin:     `fun main() {\n    println("Hello from CodeSphere!")\n}`,
+        ruby:       `greeting = "Hello from CodeSphere!"\nputs greeting`,
+        csharp:     `using System;\nclass Program {\n    static void Main() {\n        Console.WriteLine("Hello from CodeSphere!");\n    }\n}`,
+        html:       `<!DOCTYPE html>\n<html>\n<head><title>CodeSphere Preview</title></head>\n<body>\n  <h1 style="color:#4f46e5">Hello from CodeSphere! 🚀</h1>\n</body>\n</html>`,
+      };
+      const updatedCode = { ...(state.editorCode || {}) };
+      updatedCode[activeLang] = starterCode[activeLang] || `// ${activeLang}\n// Start coding here`;
+      updateState({ editorCode: updatedCode });
+    }
+  }, [activeLang]);
 
   const practiceProblem = {
     title: "Binary Search Tree Insertion",
@@ -255,7 +292,7 @@ export function EditorWorkspace() {
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#D5DEF2] bg-[#F8FAFD] text-xs font-bold text-[#566180]">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                <span>main.${activeLang === 'python' ? 'py' : activeLang === 'cpp' ? 'cpp' : activeLang === 'java' ? 'java' : 'js'}</span>
+                <span>main.${activeLangMeta.ext}</span>
               </div>
               <span className="font-mono text-[11px] text-[#566180]">UTF-8 · Zero-Leakage Workspace</span>
             </div>
@@ -263,7 +300,7 @@ export function EditorWorkspace() {
             <div className="flex-grow w-full h-full min-h-[340px]">
               <${Editor}
                 height="100%"
-                language=${activeLang === 'cpp' ? 'cpp' : activeLang === 'html' ? 'html' : activeLang === 'python' ? 'python' : 'javascript'}
+                language=${activeLangMeta.monaco}
                 theme=${editorTheme}
                 value=${currentCode}
                 onChange=${handleEditorChange}
