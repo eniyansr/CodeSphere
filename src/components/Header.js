@@ -47,7 +47,7 @@ export function Header() {
                boxShadow: '0 3px 0 #3730A3, 0 10px 14px -6px rgba(22,33,62,0.25)',
                transform: 'rotate(-5deg)'
              }}>
-          &gt;_
+          >_
         </div>
         <div>
           <h1 className="text-xl font-extrabold tracking-tight text-[#16213E] flex items-center gap-1.5 leading-none">
