@@ -408,6 +408,34 @@
     <!-- Populated by React Modules in ./src/app.js -->
   </div>
 
+  <!-- Error surface: shows JS errors inside the loading overlay -->
+  <script>
+    window.onerror = function(msg, src, line, col, err) {
+      var el = document.getElementById('app-loading');
+      if (el) {
+        el.style.background = '#fff0f0';
+        el.innerHTML = '<div style="max-width:640px;margin:auto;padding:2rem;font-family:monospace;color:#a00;background:#fff8f8;border:2px solid #fcc;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12)">' +
+          '<div style="font-size:1.2rem;font-weight:800;margin-bottom:.75rem">⚠ CodeSphere failed to start</div>' +
+          '<div style="margin-bottom:.5rem;font-size:.9rem;word-break:break-all"><b>Error:</b> ' + (msg || 'Unknown error') + '</div>' +
+          '<div style="font-size:.82rem;color:#666"><b>Source:</b> ' + (src || '') + ' line ' + (line || '?') + ':' + (col || '?') + '</div>' +
+          '<div style="margin-top:.75rem;font-size:.8rem;color:#888">Open DevTools console (F12) for the full stack trace.</div>' +
+        '</div>';
+      }
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      var el = document.getElementById('app-loading');
+      if (el && el.style.display !== 'none') {
+        var reason = (e.reason && (e.reason.stack || e.reason.message || String(e.reason))) || String(e.reason);
+        el.style.background = '#fff0f0';
+        el.innerHTML = '<div style="max-width:640px;margin:auto;padding:2rem;font-family:monospace;color:#a00;background:#fff8f8;border:2px solid #fcc;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12)">' +
+          '<div style="font-size:1.2rem;font-weight:800;margin-bottom:.75rem">⚠ CodeSphere module load failed</div>' +
+          '<div style="margin-bottom:.5rem;font-size:.9rem;word-break:break-all;white-space:pre-wrap"><b>Reason:</b> ' + reason + '</div>' +
+          '<div style="margin-top:.75rem;font-size:.8rem;color:#888">Open DevTools console (F12) for the full stack trace.</div>' +
+        '</div>';
+      }
+    });
+  </script>
+
   <!-- Main ES6 Entry Script -->
   <script type="module" src="./src/app.js"></script>
 </body>

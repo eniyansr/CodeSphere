@@ -12,15 +12,15 @@ export function EditorWorkspace() {
   const currentCode = (state.editorCode && state.editorCode[activeLang]) || '';
 
   const languagesList = [
-    { id: 'javascript', label: 'JavaScript',    badge: 'V8 Sandbox' },
-    { id: 'python',     label: 'Python 3',       badge: 'Pyodide WASM' },
-    { id: 'cpp',        label: 'C++',            badge: 'GCC 12' },
-    { id: 'c',          label: 'C',              badge: 'C17' },
-    { id: 'java',       label: 'Java',           badge: 'JVM 17' },
-    { id: 'typescript', label: 'TypeScript',     badge: 'TS 5.0' },
-    { id: 'go',         label: 'Go',             badge: 'Go 1.21' },
-    { id: 'rust',       label: 'Rust',           badge: 'Rust 1.75' },
-    { id: 'html',       label: 'HTML/CSS/JS',    badge: 'Live Preview' }
+    { id: 'javascript', label: 'JavaScript', badge: 'V8 Sandbox' },
+    { id: 'python', label: 'Python 3', badge: 'Pyodide WASM' },
+    { id: 'cpp', label: 'C++', badge: 'GCC 12' },
+    { id: 'c', label: 'C', badge: 'C17' },
+    { id: 'java', label: 'Java', badge: 'JVM 17' },
+    { id: 'typescript', label: 'TypeScript', badge: 'TS 5.0' },
+    { id: 'go', label: 'Go', badge: 'Go 1.21' },
+    { id: 'rust', label: 'Rust', badge: 'Rust 1.75' },
+    { id: 'html', label: 'HTML/CSS/JS', badge: 'Live Preview' }
   ];
 
   const activeLangMeta = languagesList.find(l => l.id === activeLang) || languagesList[0];
@@ -248,9 +248,9 @@ export function EditorWorkspace() {
           <!-- Monaco Code Editor Box -->
           <div className="flex-grow bg-white rounded-2xl border border-[#D5DEF2] overflow-hidden flex flex-col relative"
                style=${{
-                 boxShadow: '0 1px 0 #fff inset, 0 8px 0 -2px #CBD5EE, 0 24px 32px -16px rgba(22,33,62,0.18)',
-                 minHeight: '380px'
-               }}>
+      boxShadow: '0 1px 0 #fff inset, 0 8px 0 -2px #CBD5EE, 0 24px 32px -16px rgba(22,33,62,0.18)',
+      minHeight: '380px'
+    }}>
             
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#D5DEF2] bg-[#F8FAFD] text-xs font-bold text-[#566180]">
               <div className="flex items-center gap-2">
@@ -269,14 +269,14 @@ export function EditorWorkspace() {
                 onChange=${handleEditorChange}
                 onMount=${handleEditorDidMount}
                 options=${{
-                  fontSize: 14,
-                  fontFamily: '"JetBrains Mono", Consolas, monospace',
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  lineNumbers: 'on',
-                  tabSize: 2
-                }}
+      fontSize: 14,
+      fontFamily: '"JetBrains Mono", Consolas, monospace',
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      lineNumbers: 'on',
+      tabSize: 2
+    }}
               />
             </div>
           </div>
@@ -289,9 +289,8 @@ export function EditorWorkspace() {
               <div className="flex items-center gap-4 text-xs font-bold">
                 <button
                   onClick=${() => setActiveConsoleTab('out')}
-                  className=${`flex items-center gap-1.5 pb-1 border-b-2 transition-all ${
-                    activeConsoleTab === 'out' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-[#566180]'
-                  }`}
+                  className=${`flex items-center gap-1.5 pb-1 border-b-2 transition-all ${activeConsoleTab === 'out' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-[#566180]'
+    }`}
                 >
                   <i data-lucide="terminal" className="w-3.5 h-3.5"></i>
                   <span>Console Output</span>

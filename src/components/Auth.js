@@ -1,7 +1,16 @@
 // CodeSphere Pro - 3D Tactile Authentication Component with E2EE Vault (React Edition)
 import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
 import { html, useAppState, loadTeacherData, findStudentByCode } from '../state.js';
-import { registerUser, loginUser } from '../services/auth-service.js';
+
+// Dynamic import of auth-service so a crypto failure doesn't stall the login UI
+let _registerUser = async () => { throw new Error('Auth service not yet loaded'); };
+let _loginUser = async () => { throw new Error('Auth service not yet loaded'); };
+import('../services/auth-service.js')
+  .then(m => { _registerUser = m.registerUser; _loginUser = m.loginUser; })
+  .catch(err => console.warn('[CodeSphere] auth-service failed to load:', err));
+
+const registerUser = (...args) => _registerUser(...args);
+const loginUser = (...args) => _loginUser(...args);
 
 const ACCOUNTS_KEY = 'codesphere_accounts';
 const userDataKey  = (email) => `codesphere_user_${email.replace(/[^a-z0-9]/gi, '_')}`;

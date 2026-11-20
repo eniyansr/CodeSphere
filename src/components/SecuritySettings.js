@@ -8,6 +8,7 @@ export function SecuritySettings() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
 
+  // Retrieve active vault keys inside the component (not at module-level)
   const activeKeys = getActiveVaultKeys();
   const [showRecoveryKey, setShowRecoveryKey] = useState(false);
   const [deviceFingerprint, setDeviceFingerprint] = useState('Resolving...');

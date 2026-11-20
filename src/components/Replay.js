@@ -18,8 +18,8 @@ export function Replay() {
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
   const student = state.replayTargetStudent || "Eniyan Rajesh";
 
-  const timeline = (state.keystrokes && state.keystrokes.length > 5) 
-    ? state.keystrokes.map(k => k.value) 
+  const timeline = (state.keystrokes && state.keystrokes.length > 5)
+    ? state.keystrokes.map(k => k.value)
     : MOCK_TYPING_SEQUENCE;
 
   const [frameIndex, setFrameIndex] = useState(0);
@@ -115,9 +115,8 @@ export function Replay() {
                   <button
                     key=${s}
                     onClick=${() => setSpeed(s)}
-                    className=${`px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${
-                      speed === s ? 'bg-indigo-600 text-white' : 'bg-white text-[#566180]'
-                    }`}
+                    className=${`px-2.5 py-1 rounded-lg font-mono font-bold text-xs ${speed === s ? 'bg-indigo-600 text-white' : 'bg-white text-[#566180]'
+    }`}
                   >
                     ${s}x
                   </button>
@@ -147,11 +146,11 @@ export function Replay() {
               theme="vs"
               value=${timeline[frameIndex] || ''}
               options=${{
-                readOnly: true,
-                fontSize: 13,
-                minimap: { enabled: false },
-                lineNumbers: 'on'
-              }}
+      readOnly: true,
+      fontSize: 13,
+      minimap: { enabled: false },
+      lineNumbers: 'on'
+    }}
             />
           </div>
         </div>

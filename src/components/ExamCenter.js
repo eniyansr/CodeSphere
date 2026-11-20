@@ -35,14 +35,14 @@ export function ExamCenter() {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen();
       }
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Submit exam
   const handleSubmitExam = () => {
     try {
       if (document.exitFullscreen) document.exitFullscreen();
-    } catch (e) {}
+    } catch (e) { }
 
     updateState({
       examStatus: 'submitted',
@@ -89,7 +89,7 @@ export function ExamCenter() {
         stream = s;
         if (videoRef.current) videoRef.current.srcObject = s;
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       if (stream) stream.getTracks().forEach(t => t.stop());
@@ -191,31 +191,30 @@ export function ExamCenter() {
               
               <div className="grid grid-cols-4 gap-2">
                 ${activeExam.questions.map((q, idx) => {
-                  const isCurrent = idx === activeIndex;
-                  const isAnswered = (state.examAnswers || {})[q.id] !== undefined;
+      const isCurrent = idx === activeIndex;
+      const isAnswered = (state.examAnswers || {})[q.id] !== undefined;
 
-                  return html`
+      return html`
                     <button
                       key=${q.id}
                       onClick=${() => updateState({ activeQuestionIndex: idx })}
-                      className=${`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${
-                        isCurrent
-                          ? 'bg-indigo-600 text-white'
-                          : isAnswered
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                          : 'bg-[#F0F4FD] text-[#566180] border border-[#D5DEF2]'
-                      }`}
+                      className=${`h-10 rounded-xl font-bold text-xs flex items-center justify-center transition-all ${isCurrent
+          ? 'bg-indigo-600 text-white'
+          : isAnswered
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+            : 'bg-[#F0F4FD] text-[#566180] border border-[#D5DEF2]'
+        }`}
                       style=${isCurrent ? {
-                        boxShadow: '0 3px 0 #3730A3',
-                        transform: 'translateY(-2px)'
-                      } : {
-                        boxShadow: '0 2px 0 #D5DEF2'
-                      }}
+          boxShadow: '0 3px 0 #3730A3',
+          transform: 'translateY(-2px)'
+        } : {
+          boxShadow: '0 2px 0 #D5DEF2'
+        }}
                     >
                       ${idx + 1}
                     </button>
                   `;
-                })}
+    })}
               </div>
             </div>
 
@@ -257,23 +256,22 @@ export function ExamCenter() {
                 ${currentQuestion.type === 'mcq' && html`
                   <div className="space-y-2 pt-2">
                     ${currentQuestion.options.map((opt, optIdx) => {
-                      const isSelected = (state.examAnswers || {})[currentQuestion.id] === optIdx;
-                      return html`
+      const isSelected = (state.examAnswers || {})[currentQuestion.id] === optIdx;
+      return html`
                         <button
                           key=${optIdx}
                           onClick=${() => handleSelectOption(currentQuestion.id, optIdx)}
-                          className=${`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition-all ${
-                            isSelected
-                              ? 'bg-indigo-50 border-indigo-600 text-indigo-900'
-                              : 'bg-[#FAFBFD] border-[#D5DEF2] text-[#16213E] hover:bg-white'
-                          }`}
+                          className=${`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition-all ${isSelected
+          ? 'bg-indigo-50 border-indigo-600 text-indigo-900'
+          : 'bg-[#FAFBFD] border-[#D5DEF2] text-[#16213E] hover:bg-white'
+        }`}
                           style=${isSelected ? { boxShadow: '0 3px 0 #4F46E5' } : { boxShadow: '0 2px 0 #D5DEF2' }}
                         >
                           <span className="font-mono mr-2">${String.fromCharCode(65 + optIdx)}.</span>
                           <span>${opt}</span>
                         </button>
                       `;
-                    })}
+    })}
                   </div>
                 `}
 
@@ -288,10 +286,10 @@ export function ExamCenter() {
                         value=${(state.examAnswers || {})[currentQuestion.id] || currentQuestion.template || ''}
                         onChange=${handleCodingAnswerChange}
                         options=${{
-                          fontSize: 13,
-                          minimap: { enabled: false },
-                          lineNumbers: 'on'
-                        }}
+            fontSize: 13,
+            minimap: { enabled: false },
+            lineNumbers: 'on'
+          }}
                       />
                     </div>
                   </div>

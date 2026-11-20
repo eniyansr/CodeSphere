@@ -1,7 +1,16 @@
 // CodeSphere Pro - 3D Tactile Floating Lined Notepad Widget with E2EE (React Edition)
 import React, { useState, useRef, useEffect } from 'https://esm.sh/react@18.2.0';
 import { html, useAppState } from '../state.js';
-import { saveEncryptedNote, loadEncryptedNote } from '../services/encryption-service.js';
+
+// Dynamic import so a crypto failure doesn't stall React mount
+let _saveEncryptedNote = async () => {};
+let _loadEncryptedNote = async () => null;
+import('../services/encryption-service.js')
+  .then(m => { _saveEncryptedNote = m.saveEncryptedNote; _loadEncryptedNote = m.loadEncryptedNote; })
+  .catch(err => console.warn('[CodeSphere] encryption-service failed to load:', err));
+
+const saveEncryptedNote = (...args) => _saveEncryptedNote(...args);
+const loadEncryptedNote = (...args) => _loadEncryptedNote(...args);
 
 export function Notepad() {
   const { state, updateState } = useAppState();

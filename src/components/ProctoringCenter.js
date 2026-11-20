@@ -64,10 +64,10 @@ export function ProctoringCenter() {
       <!-- Candidate Feeds Grid -->
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         ${mockActiveStudents.map(student => {
-          const isFlagged = student.status === 'flagged';
-          const isWarn = student.status === 'warning';
+    const isFlagged = student.status === 'flagged';
+    const isWarn = student.status === 'warning';
 
-          return html`
+    return html`
             <div
               key=${student.id}
               className="bg-white rounded-3xl p-5 border border-[#D5DEF2] flex flex-col justify-between"
@@ -76,13 +76,12 @@ export function ProctoringCenter() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-extrabold text-[#16213E]">${student.name}</span>
-                  <span className=${`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                    isFlagged
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                      : isWarn
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
+                  <span className=${`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${isFlagged
+        ? 'bg-rose-50 text-rose-700 border-rose-200'
+        : isWarn
+          ? 'bg-amber-50 text-amber-700 border-amber-200'
+          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      }`}>
                     ${isFlagged ? 'FLAGGED' : isWarn ? 'WARNING' : 'SECURE'}
                   </span>
                 </div>
@@ -120,7 +119,7 @@ export function ProctoringCenter() {
               </div>
             </div>
           `;
-        })}
+  })}
       </div>
 
     </div>

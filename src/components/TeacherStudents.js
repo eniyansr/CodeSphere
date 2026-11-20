@@ -6,7 +6,7 @@ export function TeacherStudents() {
   const { state, updateState, saveTeacherNow } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
   const currentTeacherEmail = state.googleUser ? state.googleUser.email : '';
-  
+
   const [showModal, setShowModal] = useState(false);
   const [studName, setStudName] = useState('');
   const [studEmail, setStudEmail] = useState('');

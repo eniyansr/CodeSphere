@@ -114,29 +114,28 @@ export function ClassroomTeacher() {
       <!-- Class Selection Carousel / Tabs -->
       <div className="flex items-center gap-3 overflow-x-auto pb-4 mb-6 select-none">
         ${teacherClasses.map(c => {
-          const isSelected = c.id === activeClassId;
-          return html`
+    const isSelected = c.id === activeClassId;
+    return html`
             <button
               key=${c.id}
               onClick=${() => handleSelectClass(c.id)}
-              className=${`flex-shrink-0 px-5 py-3 rounded-2xl text-left font-bold text-xs transition-all duration-150 ${
-                isSelected
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-[#566180] hover:text-[#16213E] border border-[#D5DEF2]'
-              }`}
+              className=${`flex-shrink-0 px-5 py-3 rounded-2xl text-left font-bold text-xs transition-all duration-150 ${isSelected
+        ? 'bg-indigo-600 text-white'
+        : 'bg-white text-[#566180] hover:text-[#16213E] border border-[#D5DEF2]'
+      }`}
               style=${isSelected ? {
-                background: 'linear-gradient(180deg, #6366F1, #4F46E5)',
-                boxShadow: '0 1px 0 rgba(255,255,255,0.4) inset, 0 4px 0 #3730A3, 0 10px 14px -6px rgba(22,33,62,0.25)',
-                transform: 'translateY(-2px)'
-              } : {
-                boxShadow: '0 3px 0 #D5DEF2'
-              }}
+        background: 'linear-gradient(180deg, #6366F1, #4F46E5)',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.4) inset, 0 4px 0 #3730A3, 0 10px 14px -6px rgba(22,33,62,0.25)',
+        transform: 'translateY(-2px)'
+      } : {
+        boxShadow: '0 3px 0 #D5DEF2'
+      }}
             >
               <div className="text-[10px] uppercase font-mono opacity-80">${c.code}</div>
               <div className="text-sm font-extrabold truncate max-w-[160px]">${c.name.split(':')[1] || c.name}</div>
             </button>
           `;
-        })}
+  })}
         ${teacherClasses.length === 0 && html`
           <div className="text-xs font-semibold text-[#566180] italic py-2">
             No classes created yet. Click "+ Create Class" to get started.
@@ -167,9 +166,9 @@ export function ClassroomTeacher() {
                 </div>
                 <button
                   onClick=${() => {
-                    navigator.clipboard.writeText(activeClass.inviteCode);
-                    alert(`Copied Invite Code: ${activeClass.inviteCode}`);
-                  }}
+        navigator.clipboard.writeText(activeClass.inviteCode);
+        alert(`Copied Invite Code: ${activeClass.inviteCode}`);
+      }}
                   className="chip text-xs hover:bg-white"
                   title="Copy invite code"
                 >
@@ -215,12 +214,12 @@ export function ClassroomTeacher() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick=${() => {
-                        updateState({
-                          activeTab: 'practice',
-                          activeAssignmentId: a.id,
-                          activeTeacherId: activeClass.teacherEmail
-                        });
-                      }}
+          updateState({
+            activeTab: 'practice',
+            activeAssignmentId: a.id,
+            activeTeacherId: activeClass.teacherEmail
+          });
+        }}
                       className="btn text-xs px-4 py-2 flex items-center gap-1.5"
                       style=${{ width: 'auto' }}
                     >
