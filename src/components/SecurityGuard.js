@@ -1,121 +1,116 @@
 // CodeSphere Pro - Security Lockdown Monitoring Guards (React Hook Edition)
+// Guards are ONLY active during an explicit exam lockdown (state.isLockdownActive === true).
+// All browser-blocking alerts are replaced with silent log entries or on-page toasts
+// so normal browsing (DevTools, tab switching before an exam) is never interrupted.
 import React, { useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+
+// ─── Lightweight toast (no alert() so the UI never freezes) ──────────────────
+function showExamToast(message) {
+  const existing = document.getElementById('cs-exam-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'cs-exam-toast';
+  toast.style.cssText = [
+    'position:fixed', 'top:1rem', 'left:50%', 'transform:translateX(-50%)',
+    'background:#1e293b', 'color:#f8fafc', 'padding:.75rem 1.5rem',
+    'border-radius:12px', 'font-family:system-ui,sans-serif', 'font-size:.9rem',
+    'font-weight:600', 'box-shadow:0 8px 24px rgba(0,0,0,.35)',
+    'border:1px solid #e5484d', 'z-index:999999',
+    'max-width:90vw', 'text-align:center', 'pointer-events:none'
+  ].join(';');
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
 
 export function useSecurityGuards(state, updateState) {
   const stateRef = useRef(state);
   stateRef.current = state;
 
   useEffect(() => {
-    // 1. Tab Focus Blurs Monitoring
-    const handleBlur = () => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+    // Helper: returns true only during an active proctored exam session
+    const isExamActive = () =>
+      stateRef.current.isLoggedIn && stateRef.current.isLockdownActive;
 
-      // Trigger tab-swap policy warning
+    const addLog = (event, details) => {
       const stamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
-      const newLog = {
+      const currentState = stateRef.current;
+      const log = {
         timestamp: stamp,
-        user: currentState.googleUser ? currentState.googleUser.name : "Student",
-        event: "Tab Switch Flag",
-        details: "Candidate navigated away from proctored exam workspace tab.",
-        severity: "warning"
+        user: currentState.googleUser ? currentState.googleUser.name : 'Student',
+        event,
+        details,
+        severity: 'warning'
       };
-
-      const count = currentState.warningsCount + 1;
-      
-      // Alert warnings overlay
-      alert(`SECURITY WARNING #${count}:\n- Leaving the secure exam window violates code assessment rules.\n- Tab switches are logged for teacher/invigilator audits.`);
-
-      updateState({
-        warningsCount: count,
-        securityLogs: [newLog, ...currentState.securityLogs]
-      });
+      updateState({ securityLogs: [log, ...currentState.securityLogs] });
     };
 
-    // 2. Clipboard Controls Blocking
+    // 1. Tab / window blur — only during exam lockdown
+    const handleBlur = () => {
+      if (!isExamActive()) return;
+      const count = stateRef.current.warningsCount + 1;
+      updateState({ warningsCount: count });
+      addLog('Tab Switch Flag', 'Candidate navigated away from proctored exam workspace.');
+      showExamToast(`⚠ Warning #${count}: Tab switches are logged during exams.`);
+    };
+
+    // 2. Clipboard — only during exam lockdown
     const handleCopy = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+      if (!isExamActive()) return;
       e.preventDefault();
-      logClipboardAction("Clipboard Copy Blocked");
-      alert("CLIPBOARD LOCKDOWN: Copy operations are restricted during secure exams.");
+      addLog('Clipboard Copy Blocked', 'Copy attempt during lockdown.');
+      showExamToast('🔒 Copy is disabled during secure exams.');
     };
 
     const handlePaste = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+      if (!isExamActive()) return;
       e.preventDefault();
-      logClipboardAction("Clipboard Paste Blocked");
-      alert("CLIPBOARD LOCKDOWN: Paste operations are restricted during secure exams.");
+      addLog('Clipboard Paste Blocked', 'Paste attempt during lockdown.');
+      showExamToast('🔒 Paste is disabled during secure exams.');
     };
 
     const handleCut = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+      if (!isExamActive()) return;
       e.preventDefault();
-      alert("CLIPBOARD LOCKDOWN: Cut operations are restricted during secure exams.");
+      addLog('Clipboard Cut Blocked', 'Cut attempt during lockdown.');
+      showExamToast('🔒 Cut is disabled during secure exams.');
     };
 
-    // 3. Right Click context menus blocker
+    // 3. Right-click — only during exam lockdown
     const handleContextMenu = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+      if (!isExamActive()) return;
       e.preventDefault();
-      logClipboardAction("Right Click Blocked");
-      alert("INSPECTION SHIELD: Context menus are disabled in lockdown mode.");
+      addLog('Right Click Blocked', 'Context menu attempt during lockdown.');
     };
 
-    // 4. Drag & Drop blocking
-    const handleDragStart = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
-      e.preventDefault();
-    };
-    const handleDrop = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
-      e.preventDefault();
-    };
+    // 4. Drag & Drop — only during exam lockdown
+    const handleDragStart = (e) => { if (!isExamActive()) return; e.preventDefault(); };
+    const handleDrop     = (e) => { if (!isExamActive()) return; e.preventDefault(); };
 
-    // 5. Keydown controls blocker (Developer Tools, Screenshots, copy/paste shortcuts)
+    // 5. Keyboard shortcuts — only during exam lockdown
     const handleKeyDown = (e) => {
-      const currentState = stateRef.current;
-      if (!currentState.isLockdownActive) return;
+      if (!isExamActive()) return;
 
-      // Block Ctrl+V / Cmd+V globally in lockdown
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+      // Block Ctrl+C / Ctrl+V / Ctrl+X
+      if ((e.ctrlKey || e.metaKey) && ['c', 'C', 'v', 'V', 'x', 'X'].includes(e.key)) {
         e.preventDefault();
-        logClipboardAction("Ctrl+V Paste Combination Blocked");
-        alert("CLIPBOARD LOCKDOWN: Paste operations (Ctrl+V) are restricted on this secure website.");
+        addLog('Hotkey Blocked', `${e.ctrlKey ? 'Ctrl' : 'Cmd'}+${e.key.toUpperCase()} during lockdown.`);
+        showExamToast('🔒 Clipboard shortcuts are restricted during exams.');
         return;
       }
 
-      // Block F12, Ctrl+Shift+I, Ctrl+Shift+C (inspectors)
-      const isInspect = (e.key === 'F12') || 
-                        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) ||
-                        (e.ctrlKey && (e.key === 'U' || e.key === 'u')); // View Source
+      // Block DevTools shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+U)
+      const isDevTools =
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['i','I','j','J','c','C'].includes(e.key)) ||
+        (e.ctrlKey && ['u','U'].includes(e.key));
 
-      if (isInspect) {
+      if (isDevTools) {
         e.preventDefault();
-        logClipboardAction("Developer Tools Blocked");
-        alert("SECURITY SHIELD: Developer tools access is locked in proctored session.");
+        addLog('DevTools Blocked', 'Developer tools hotkey during lockdown.');
+        showExamToast('🔒 Developer tools are locked during proctored sessions.');
       }
-    };
-
-    const logClipboardAction = (eventTitle) => {
-      const currentState = stateRef.current;
-      const stamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
-      const clipLog = {
-        timestamp: stamp,
-        user: currentState.googleUser ? currentState.googleUser.name : "Student",
-        event: "Security Block",
-        details: `Restricted key/context attempt triggered: ${eventTitle}`,
-        severity: "warning"
-      };
-
-      updateState({
-        securityLogs: [clipLog, ...currentState.securityLogs]
-      });
     };
 
     window.addEventListener('blur', handleBlur);
