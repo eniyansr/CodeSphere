@@ -2,16 +2,27 @@
 import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
 import Editor from 'https://esm.sh/@monaco-editor/react@4.6.0?deps=react@18.2.0,react-dom@18.2.0';
 import { html, useAppState, TRANSLATIONS } from '../state.js';
-import { executeCode } from '../services/compiler-service.js';
 
 export function ExamCenter() {
   const { state, updateState } = useAppState();
   const t = TRANSLATIONS[state.language] || TRANSLATIONS.en;
 
-  // Classroom & Exam Modes: 'classroom' | 'exam'
+  // Session State: 'lobby' | 'active' | 'completed'
+  const [sessionState, setSessionState] = useState('lobby');
+
+  // Room Mode inside active session: 'classroom' | 'exam'
   const [roomMode, setRoomMode] = useState('classroom'); 
   const [hasConsent, setHasConsent] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
+
+  // Hardware Media States
+  const [cameraActive, setCameraActive] = useState(false);
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const localStreamRef = useRef(null);
+  const screenStreamRef = useRef(null);
+  const videoRef = useRef(null);
+  const screenVideoRef = useRef(null);
 
   // Classroom Collaboration Tools
   const [activeSideDrawer, setActiveSideDrawer] = useState('chat'); // 'chat' | 'whiteboard' | 'attendance'
@@ -31,6 +42,7 @@ export function ExamCenter() {
   const [testResults, setTestResults] = useState(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [myRiskScore, setMyRiskScore] = useState(8); // GRU risk score
+  const [completionSummary, setCompletionSummary] = useState(null);
 
   // Exam Questions
   const examQuestions = [
@@ -78,14 +90,12 @@ export function ExamCenter() {
     0: currentQ.starterCode
   });
 
-  // Local Webcam Ref
-  const videoRef = useRef(null);
-  const [cameraActive, setCameraActive] = useState(false);
-
+  // ─── Hardware Media Controls ────────────────────────────────────────────────
   // Start Camera with user consent
   const handleEnableCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStreamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -94,21 +104,140 @@ export function ExamCenter() {
       setHasConsent(true);
       setShowConsentModal(false);
     } catch (err) {
-      alert('Camera permission denied or camera not found. Local simulation active.');
+      console.warn('Camera access denied or unavailable; fallback simulation active:', err);
       setCameraActive(true);
       setHasConsent(true);
       setShowConsentModal(false);
     }
   };
 
-  // Exam Timer
+  // Toggle Camera
+  const handleToggleCamera = () => {
+    if (localStreamRef.current) {
+      const videoTracks = localStreamRef.current.getVideoTracks();
+      const nextActive = !cameraActive;
+      videoTracks.forEach(track => { track.enabled = nextActive; });
+      setCameraActive(nextActive);
+    } else {
+      if (!cameraActive) {
+        handleEnableCamera();
+      } else {
+        setCameraActive(false);
+      }
+    }
+  };
+
+  // Toggle Microphone
+  const handleToggleMic = () => {
+    const nextMuted = !isMicMuted;
+    setIsMicMuted(nextMuted);
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach(track => { track.enabled = !nextMuted; });
+    }
+  };
+
+  // Toggle Screen Share
+  const handleToggleScreenShare = async () => {
+    if (isScreenSharing) {
+      // Stop sharing
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(t => t.stop());
+        screenStreamRef.current = null;
+      }
+      setIsScreenSharing(false);
+    } else {
+      // Start sharing
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        screenStreamRef.current = stream;
+        setIsScreenSharing(true);
+        if (screenVideoRef.current) {
+          screenVideoRef.current.srcObject = stream;
+          screenVideoRef.current.play();
+        }
+        stream.getVideoTracks()[0].onended = () => {
+          setIsScreenSharing(false);
+          screenStreamRef.current = null;
+        };
+      } catch (err) {
+        console.warn('Screen share cancelled or failed:', err);
+      }
+    }
+  };
+
+  // ─── Session Lifecycle Controls ─────────────────────────────────────────────
+  // Enter Session from Lobby
+  const handleEnterSession = () => {
+    setSessionState('active');
+    handleEnableCamera();
+  };
+
+  // Clean Stop of all media streams
+  const stopAllMediaStreams = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+    }
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(t => t.stop());
+      screenStreamRef.current = null;
+    }
+    setCameraActive(false);
+    setIsScreenSharing(false);
+  };
+
+  // Leave / Close Session Manually
+  const handleCloseSession = () => {
+    const isTeacher = state.role === 'teacher';
+    const confirmMsg = isTeacher
+      ? 'End and close this live classroom session for all students?'
+      : 'Leave the live class session? You can re-enter from the lobby.';
+    
+    if (confirm(confirmMsg)) {
+      stopAllMediaStreams();
+      setSessionState('lobby');
+      setRoomMode('classroom');
+      setExamStarted(false);
+    }
+  };
+
+  // Built-in Automatic Completion Handler
+  const handleCompleteSession = (reason = 'submission') => {
+    stopAllMediaStreams();
+    setSessionState('completed');
+    setCompletionSummary({
+      reason,
+      submittedAt: new Date().toLocaleTimeString(),
+      score: '95 / 100',
+      questionsPassed: '3 / 3 Questions Verified',
+      riskScore: `${myRiskScore}% (Low Risk - Compliant)`,
+      hash: 'sha256:8f2a...90e1'
+    });
+  };
+
+  // Exam Timer Countdown with built-in auto-completion on 0
   useEffect(() => {
-    if (!examStarted) return;
+    if (!examStarted || sessionState !== 'active') return;
     const interval = setInterval(() => {
-      setExamSeconds(s => (s > 0 ? s - 1 : 0));
+      setExamSeconds(s => {
+        if (s <= 1) {
+          clearInterval(interval);
+          handleCompleteSession('timer_expired');
+          return 0;
+        }
+        return s - 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [examStarted]);
+  }, [examStarted, sessionState]);
+
+  // Clean up media streams on unmount
+  useEffect(() => {
+    return () => {
+      stopAllMediaStreams();
+    };
+  }, []);
 
   // Send Chat message
   const handleSendChat = (e) => {
@@ -152,10 +281,138 @@ export function ExamCenter() {
     }, 1200);
   };
 
+  // ─── VIEW 1: CLASSROOM LOBBY ────────────────────────────────────────────────
+  if (sessionState === 'lobby') {
+    return html`
+      <div className="flex-grow p-4 md:p-8 bg-[#F4F7FE] overflow-y-auto flex items-center justify-center">
+        
+        <div className="max-w-2xl w-full bg-white rounded-3xl border border-[#D5DEF2] p-6 md:p-8 shadow-sm"
+             style=${{ boxShadow: '0 1px 0 #fff inset, 0 10px 0 -2px #CBD5EE, 0 32px 48px -16px rgba(22,33,62,0.18)' }}>
+          
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl shadow-md">
+              🏫
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  ● SESSION LIVE NOW
+                </span>
+                <span className="text-xs text-[#566180] font-bold">24 Students Connected</span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-extrabold text-[#16213E] tracking-tight mt-0.5">
+                CS-302: Data Structures & Algorithms
+              </h2>
+            </div>
+          </div>
+
+          <p className="text-xs md:text-sm text-[#566180] leading-relaxed mb-6">
+            Join the WebRTC live classroom session with Dr. Sarah Jenkins. The session includes interactive lectures, a shared whiteboard, class discussion, and the official proctored Midterm Assessment.
+          </p>
+
+          <!-- Pre-flight Hardware Verification Grid -->
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 font-mono text-xs">
+            <div className="bg-[#F0F4FD] p-3 rounded-2xl border border-[#D5DEF2]">
+              <div className="text-[10px] uppercase font-bold text-[#566180] mb-1">Camera Feed</div>
+              <div className="font-extrabold text-emerald-700 flex items-center gap-1.5">
+                <span>✓</span> <span>Ready (Edge CNN)</span>
+              </div>
+            </div>
+            <div className="bg-[#F0F4FD] p-3 rounded-2xl border border-[#D5DEF2]">
+              <div className="text-[10px] uppercase font-bold text-[#566180] mb-1">Microphone</div>
+              <div className="font-extrabold text-emerald-700 flex items-center gap-1.5">
+                <span>✓</span> <span>Unmuted & Connected</span>
+              </div>
+            </div>
+            <div className="bg-[#F0F4FD] p-3 rounded-2xl border border-[#D5DEF2]">
+              <div className="text-[10px] uppercase font-bold text-[#566180] mb-1">Privacy Gate</div>
+              <div className="font-extrabold text-indigo-700 flex items-center gap-1.5">
+                <span>🔒</span> <span>Zero-Video Server</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enter Live Class Button -->
+          <div className="space-y-3">
+            <button
+              onClick=${handleEnterSession}
+              className="btn text-sm py-4 w-full flex items-center justify-center gap-2 font-bold"
+            >
+              <span>Enter Live Class Session</span>
+              <span>→</span>
+            </button>
+
+            <div className="text-[11px] text-center text-[#566180] font-mono">
+              WebRTC encrypted peer connection · Built-in automatic completion on exam submission
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  // ─── VIEW 2: COMPLETED SESSION SUMMARY (Built-in Auto Completion) ────────────
+  if (sessionState === 'completed') {
+    return html`
+      <div className="flex-grow p-4 md:p-8 bg-[#F4F7FE] overflow-y-auto flex items-center justify-center">
+        
+        <div className="max-w-md w-full bg-white rounded-3xl border-2 border-emerald-300 p-6 md:p-8 text-center shadow-lg animate-in zoom-in-95 duration-200"
+             style=${{ boxShadow: '0 20px 40px -10px rgba(16,185,129,0.2)' }}>
+          
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white text-3xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            🎓
+          </div>
+
+          <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+            ASSESSMENT CONCLUDED
+          </span>
+
+          <h3 className="text-2xl font-black text-[#16213E] mt-2 mb-1">Session Completed</h3>
+          <p className="text-xs text-[#566180] mb-6">
+            ${completionSummary?.reason === 'timer_expired'
+              ? 'The allotted exam time concluded. Your latest code revisions have been securely encrypted and submitted.'
+              : 'Your exam answers were encrypted with your teacher public key and signed by your local ECDSA vault key.'}
+          </p>
+
+          <div className="bg-[#F0F4FD] rounded-2xl border border-[#D5DEF2] p-4 text-left font-mono text-xs space-y-2 mb-6">
+            <div className="flex justify-between">
+              <span className="text-[#566180]">Completed At:</span>
+              <strong className="text-[#16213E]">${completionSummary?.submittedAt}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#566180]">Questions Verified:</span>
+              <strong className="text-emerald-700">${completionSummary?.questionsPassed}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#566180]">GRU Integrity Risk:</span>
+              <strong className="text-emerald-700">${completionSummary?.riskScore}</strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#566180]">Attestation Hash:</span>
+              <strong className="text-indigo-700">${completionSummary?.hash}</strong>
+            </div>
+          </div>
+
+          <button
+            onClick=${() => setSessionState('lobby')}
+            className="btn text-xs py-3 w-full font-bold"
+          >
+            Return to Classroom Lobby
+          </button>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  // ─── VIEW 3: ACTIVE LIVE SESSION (Classroom / Exam) ──────────────────────────
   return html`
     <div className="flex-grow flex flex-col min-h-0 bg-[#F4F7FE] p-3 md:p-5 overflow-hidden">
       
-      <!-- Top Control Bar (Room Mode, Presence, Hand Raise, Start Exam) -->
+      <!-- Top Control Bar (Room Mode, Presence, Hand Raise, Start Exam, Close Session) -->
       <div className="bg-white rounded-2xl border border-[#D5DEF2] p-3.5 mb-3 flex flex-wrap items-center justify-between gap-3"
            style=${{ boxShadow: '0 4px 0 #D5DEF2, 0 10px 16px -6px rgba(22,33,62,0.1)' }}>
         
@@ -174,14 +431,14 @@ export function ExamCenter() {
             </div>
             <div className="text-[11px] text-[#566180]">
               ${roomMode === 'classroom'
-                ? 'WebRTC Live Classroom · Teacher: Dr. Sarah Jenkins'
+                ? 'WebRTC Live Classroom · Host: Dr. Sarah Jenkins'
                 : `Question ${currentQuestionIndex + 1} of 3 · ${currentQ.title}`}
             </div>
           </div>
         </div>
 
-        <!-- Mode Toggle & Actions -->
-        <div className="flex items-center gap-2.5">
+        <!-- Mode Toggle, Timer & Session Controls -->
+        <div className="flex items-center gap-2">
           
           <!-- Integrity Risk Badge (Visible in Exam Mode) -->
           ${roomMode === 'exam' && html`
@@ -221,20 +478,28 @@ export function ExamCenter() {
                   setExamStarted(true);
                 }
               }}
-              className="btn text-xs px-4 py-2 flex items-center gap-1.5"
+              className="btn text-xs px-3.5 py-2 flex items-center gap-1.5 font-bold"
               style=${{ width: 'auto' }}
             >
-              <i data-lucide="check-square" className="w-3.5 h-3.5"></i>
               <span>Enter Exam Mode</span>
             </button>
           ` : html`
             <button
               onClick=${() => setRoomMode('classroom')}
-              className="chip text-xs px-4 py-2 font-bold text-[#16213E]"
+              className="chip text-xs px-3.5 py-2 font-bold text-[#16213E]"
             >
-              Back to Live Classroom
+              Back to Classroom
             </button>
           `}
+
+          <!-- Close / Leave Session Button -->
+          <button
+            onClick=${handleCloseSession}
+            className="px-3 py-2 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all"
+            title="Leave or end this live session"
+          >
+            ${state.role === 'teacher' ? 'Close Session' : 'Leave Session'}
+          </button>
 
         </div>
 
@@ -253,37 +518,42 @@ export function ExamCenter() {
             <div className="flex-grow bg-[#16213E] rounded-3xl p-3 border border-[#D5DEF2] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 overflow-y-auto"
                  style=${{ boxShadow: '0 8px 24px -10px rgba(22,33,62,0.3)' }}>
               
-              <!-- Pinned Teacher Feed -->
+              <!-- Pinned Teacher Feed or Screen Share View -->
               <div className="sm:col-span-2 relative rounded-2xl overflow-hidden bg-slate-800 border-2 border-indigo-400 aspect-video flex items-center justify-center shadow-lg">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-mono font-bold text-2xl flex items-center justify-center shadow-inner">
-                  SJ
-                </div>
-                <div className="absolute top-3 left-3 px-2 py-0.5 rounded-lg bg-black/60 text-white font-mono text-[11px] font-bold backdrop-blur-sm">
-                  Dr. Sarah Jenkins (Host)
-                </div>
-                <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/80 text-white text-[10px] font-bold">
-                  <span>🎙️ Speaking</span>
-                </div>
+                ${isScreenSharing ? html`
+                  <video ref=${screenVideoRef} autoPlay playsInline className="w-full h-full object-contain bg-black"></video>
+                  <div className="absolute top-3 left-3 px-2 py-0.5 rounded-lg bg-emerald-600/90 text-white font-mono text-[11px] font-bold backdrop-blur-sm">
+                    🖥️ Live Screen Presentation Active
+                  </div>
+                ` : html`
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-mono font-bold text-2xl flex items-center justify-center shadow-inner">
+                    SJ
+                  </div>
+                  <div className="absolute top-3 left-3 px-2 py-0.5 rounded-lg bg-black/60 text-white font-mono text-[11px] font-bold backdrop-blur-sm">
+                    Dr. Sarah Jenkins (Host)
+                  </div>
+                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/80 text-white text-[10px] font-bold">
+                    <span>🎙️ Speaking</span>
+                  </div>
+                `}
               </div>
 
               <!-- Student 1 (You) with WebRTC Camera -->
               <div className="relative rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 aspect-video flex items-center justify-center">
-                <video ref=${videoRef} autoPlay playsInline muted className="w-full h-full object-cover"></video>
+                <video ref=${videoRef} autoPlay playsInline muted className=${`w-full h-full object-cover ${!cameraActive ? 'hidden' : ''}`}></video>
+                
                 ${!cameraActive && html`
                   <div className="text-center p-2">
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold mx-auto flex items-center justify-center text-xs mb-1">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold mx-auto flex items-center justify-center text-xs mb-1 shadow-sm">
                       ER
                     </div>
-                    <button
-                      onClick=${handleEnableCamera}
-                      className="text-[10px] font-bold px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg"
-                    >
-                      Turn On Camera
-                    </button>
+                    <span className="text-[10px] font-mono text-gray-400 font-bold block">Camera Off</span>
                   </div>
                 `}
-                <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono">
-                  You (Eniyan R.)
+                
+                <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono flex items-center gap-1">
+                  <span>You (Eniyan R.)</span>
+                  ${isMicMuted && html`<span className="text-rose-400">🔇</span>`}
                 </div>
               </div>
 
@@ -294,7 +564,7 @@ export function ExamCenter() {
                 { name: 'Sharath Chandra', avatar: 'SC', color: '#F59E0B' }
               ].map(peer => html`
                 <div key=${peer.name} className="relative rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 aspect-video flex items-center justify-center">
-                  <div className="w-10 h-10 rounded-full text-white font-bold text-xs flex items-center justify-center"
+                  <div className="w-10 h-10 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-sm"
                        style=${{ background: peer.color }}>
                     ${peer.avatar}
                   </div>
@@ -306,20 +576,39 @@ export function ExamCenter() {
 
             </div>
 
-            <!-- Video Conference Control Bar -->
+            <!-- Video Conference Control Bar (Functional Mic, Camera, Screen Share) -->
             <div className="bg-white rounded-2xl border border-[#D5DEF2] p-2.5 flex items-center justify-center gap-3 shadow-sm">
+              
+              <!-- Camera Button -->
               <button
-                onClick=${() => setCameraActive(!cameraActive)}
-                className=${`chip text-xs px-3 py-2 flex items-center gap-1.5 font-bold ${cameraActive ? 'bg-indigo-50 text-indigo-700' : ''}`}
+                onClick=${handleToggleCamera}
+                className=${`chip text-xs px-3.5 py-2 flex items-center gap-1.5 font-bold transition-all ${
+                  cameraActive ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-gray-100 text-gray-700'
+                }`}
               >
                 <span>${cameraActive ? '📹 Cam Active' : '📷 Cam Off'}</span>
               </button>
-              <button className="chip text-xs px-3 py-2 flex items-center gap-1.5 font-bold">
-                <span>🎙️ Mic Unmuted</span>
+
+              <!-- Working Microphone Button -->
+              <button
+                onClick=${handleToggleMic}
+                className=${`chip text-xs px-3.5 py-2 flex items-center gap-1.5 font-bold transition-all ${
+                  isMicMuted ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                }`}
+              >
+                <span>${isMicMuted ? '🔇 Mic Muted' : '🎙️ Mic Active'}</span>
               </button>
-              <button className="chip text-xs px-3 py-2 flex items-center gap-1.5 font-bold">
-                <span>🖥️ Share Screen</span>
+
+              <!-- Working Screen Share Button -->
+              <button
+                onClick=${handleToggleScreenShare}
+                className=${`chip text-xs px-3.5 py-2 flex items-center gap-1.5 font-bold transition-all ${
+                  isScreenSharing ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-[#16213E]'
+                }`}
+              >
+                <span>${isScreenSharing ? '⏹ Stop Share' : '🖥️ Share Screen'}</span>
               </button>
+
             </div>
 
           </div>
@@ -532,12 +821,14 @@ export function ExamCenter() {
                 `}
               </div>
 
+              <!-- Submit & Auto-Close Session Button -->
               <button
                 onClick=${() => {
-                  alert('🎉 Official exam submission encrypted and transmitted to invigilator vault!');
-                  setRoomMode('classroom');
+                  if (confirm('Submit and finalize your examination assessment? The live proctored session will complete automatically.')) {
+                    handleCompleteSession('manual_submit');
+                  }
                 }}
-                className="btn teal text-xs px-5 py-2 flex items-center gap-1.5"
+                className="btn teal text-xs px-5 py-2 flex items-center gap-1.5 font-bold"
                 style=${{ width: 'auto' }}
               >
                 Submit & Complete Assessment
