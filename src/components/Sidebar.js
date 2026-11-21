@@ -9,28 +9,30 @@ export function Sidebar() {
   // Menu items configured with icons matching the 3D tactile UI
   const menuConfig = {
     student: [
-      { id: 'dashboard',    label: 'Dashboard',       icon: 'layout-grid' },
-      { id: 'classroom',    label: 'Classroom',       icon: 'book-open' },
-      { id: 'exams',        label: 'Examination',     icon: 'check-square' },
-      { id: 'practice',     label: 'Practice arena',  icon: 'code-2' },
-      { id: 'battle',       label: 'Coding battle',   icon: 'zap' },
-      { id: 'certificates', label: 'Certificates',    icon: 'award' },
-      { id: 'security',     label: 'Security center', icon: 'shield-check' },
-      { id: 'notepad',      label: 'Notepad',         icon: 'pencil' }
+      { id: 'dashboard',    label: 'Dashboard',          icon: 'layout-grid' },
+      { id: 'classroom',    label: 'Classroom',          icon: 'book-open' },
+      { id: 'exams',        label: 'Live Class & Exam',  icon: 'video' },
+      { id: 'practice',     label: 'Adaptive Arena',     icon: 'brain' },
+      { id: 'battle',       label: 'Coding Battle',      icon: 'zap' },
+      { id: 'proctoring',   label: 'AI Monitoring',      icon: 'shield-alert' },
+      { id: 'certificates', label: 'Certificates',       icon: 'award' },
+      { id: 'security',     label: 'Data & Privacy',     icon: 'shield-check' },
+      { id: 'notepad',      label: 'Notepad',            icon: 'pencil' }
     ],
     teacher: [
-      { id: 'dashboard',    label: 'Dashboard',        icon: 'layout-grid' },
-      { id: 'classroom',    label: 'Classroom',        icon: 'book-open' },
-      { id: 'students',     label: 'Students List',    icon: 'users' },
-      { id: 'proctoring',   label: 'Live Proctoring',  icon: 'shield-alert' },
-      { id: 'exams',        label: 'Examination',      icon: 'check-square' },
-      { id: 'security',     label: 'Security center',  icon: 'shield-check' },
-      { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
+      { id: 'dashboard',    label: 'Dashboard',          icon: 'layout-grid' },
+      { id: 'classroom',    label: 'Classroom',          icon: 'book-open' },
+      { id: 'students',     label: 'Students List',       icon: 'users' },
+      { id: 'proctoring',   label: 'AI Monitoring',      icon: 'shield-alert' },
+      { id: 'exams',        label: 'Live Class & Exam',  icon: 'video' },
+      { id: 'security',     label: 'Data & Privacy',     icon: 'shield-check' },
+      { id: 'notepad',      label: 'Notepad',            icon: 'pencil' }
     ],
     admin: [
-      { id: 'admin',        label: 'Admin Control',    icon: 'shield-check' },
-      { id: 'security',     label: 'Security center',  icon: 'shield-check' },
-      { id: 'notepad',      label: 'Notepad',          icon: 'pencil' }
+      { id: 'admin',        label: 'Admin Control',       icon: 'shield-check' },
+      { id: 'proctoring',   label: 'AI Monitoring',      icon: 'shield-alert' },
+      { id: 'security',     label: 'Data & Privacy',     icon: 'shield-check' },
+      { id: 'notepad',      label: 'Notepad',            icon: 'pencil' }
     ]
   };
 

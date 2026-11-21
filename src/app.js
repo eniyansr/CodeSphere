@@ -101,7 +101,7 @@ function TabRouter({ tab, role }) {
   const ClassroomTeacher= useLazy('./components/ClassroomTeacher.js', 'ClassroomTeacher');
   const TeacherStudents = useLazy('./components/TeacherStudents.js',  'TeacherStudents');
   const ExamCenter      = useLazy('./components/ExamCenter.js',       'ExamCenter');
-  const ProctoringCenter= useLazy('./components/ProctoringCenter.js', 'ProctoringCenter');
+  const MonitoringAnalytics = useLazy('./components/MonitoringAnalytics.js', 'MonitoringAnalytics');
   const BattleArena     = useLazy('./components/BattleArena.js',      'BattleArena');
   const Certificates    = useLazy('./components/Certificates.js',     'Certificates');
   const Replay          = useLazy('./components/Replay.js',           'Replay');
@@ -119,7 +119,7 @@ function TabRouter({ tab, role }) {
   if (tab === 'practice')     return show(EditorWorkspace,  'EditorWorkspace');
   if (tab === 'battle')       return show(BattleArena,      'BattleArena');
   if (tab === 'certificates') return show(Certificates,     'Certificates');
-  if (tab === 'proctoring')   return show(ProctoringCenter, 'ProctoringCenter');
+  if (tab === 'proctoring')   return show(MonitoringAnalytics, 'MonitoringAnalytics');
   if (tab === 'admin')        return show(AdminPanel,        'AdminPanel');
   if (tab === 'students')     return show(TeacherStudents,   'TeacherStudents');
   if (tab === 'replay_viewer')return show(Replay,            'Replay');
